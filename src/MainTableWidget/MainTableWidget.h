@@ -160,7 +160,7 @@ private:
     void timerEvent(QTimerEvent *event);
     int scr_w;
     int scr_h;
-
+    bool isFinish = false;
     
 };
 

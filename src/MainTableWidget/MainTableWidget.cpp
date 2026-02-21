@@ -182,19 +182,19 @@ void MainTableWidget::initAnimation()
 void MainTableWidget::showWindow(int scr_w, int scr_h)
 {
 
-    //窗口开启/关闭动画
-    window_show_animation = new QPropertyAnimation(this,"geometry");
-    window_show_animation->setDuration(500);
-    window_show_animation->setEasingCurve(QEasingCurve::OutExpo);
-    window_show_animation->setStartValue(QRect((scr_w-width()/2)/2,-78,width()/2,height()));
-    window_show_animation->setEndValue(QRect((scr_w-width())/2,0,width(),height()));
-    setGeometry(QRect((scr_w-width()/2)/2,-78,width()/2,height()));
-    asyncSleep(500);
-    initTodayTable();
-    initAnimation();
-    ui->timer_show->move(width() + ui->timer_show->width(),0);
+    // //窗口开启/关闭动画
+    // window_show_animation = new QPropertyAnimation(this,"geometry");
+    // window_show_animation->setDuration(500);
+    // window_show_animation->setEasingCurve(QEasingCurve::OutExpo);
+    // window_show_animation->setStartValue(QRect((scr_w-width()/2)/2,-78,width()/2,height()));
+    // window_show_animation->setEndValue(QRect((scr_w-width())/2,0,width(),height()));
+    // setGeometry(QRect((scr_w-width()/2)/2,-78,width()/2,height()));
+    // asyncSleep(500);
+    // initTodayTable();
+    // initAnimation();
+    // ui->timer_show->move(width() + ui->timer_show->width(),0);
     show();
-    window_show_animation->start();
+    // window_show_animation->start();
 }
 
 void MainTableWidget::initUi(){
@@ -222,6 +222,10 @@ void MainTableWidget::initUi(){
 }
 void MainTableWidget::on_hideWindow()
 {
+    if (isFinish)
+    {
+        return;
+    }
     if (!WindowHide)
     {
         hide_animation->setDirection(QAbstractAnimation::Forward);
@@ -235,7 +239,6 @@ void MainTableWidget::on_hideWindow()
         WindowHide = true;
     }else
     {
-
         hide_animation->setDirection(QAbstractAnimation::Backward);
         hide_animation->start();
         asyncSleep(hide_animation->duration()/2);
@@ -275,6 +278,7 @@ void MainTableWidget::initSignal(){
     },Qt::QueuedConnection);
     connect(rtt,&refechTableThread::toDone,this,[=]
     {
+        isFinish = true;
         resize(531,height());
         ui->stackedWidget->resize(531,height());
         ui->status_show->resize(531,height());
