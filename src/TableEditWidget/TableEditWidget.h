@@ -33,7 +33,6 @@
 #include<QProcess>
 #include "../NetworkRequests/NetworkRequests.h"
 #include "../AppendixTableManager/AppendixTableManager.h"
-#include "../CloudSettingsTab/CloudSettingsTab.h"
 #include "../VERSION.h"
 namespace Ui {
 class TableEditWidget;

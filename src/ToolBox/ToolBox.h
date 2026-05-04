@@ -11,13 +11,11 @@
 #include<QJsonObject>
 #include<QJsonDocument>
 #include<QJsonParseError>
-#include<QtWebEngineWidgets>
 #include"../ClickLabel/ClickLabel.h"
 #pragma comment(lib,"Dwmapi.lib")
 #include<QColorDialog>
 #include"../AppLog/AppLog.h"
 #include "../YiyanDialog/YiyanDialog.h"
-#include"../PluginWebEngine/PluginWebEngine.h"
 #include<cstdlib>
 namespace Ui {
 class ToolBox;

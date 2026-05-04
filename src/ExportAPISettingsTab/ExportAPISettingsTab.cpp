@@ -16,6 +16,9 @@ ExportAPISettingsTab::~ExportAPISettingsTab()
 
 void ExportAPISettingsTab::initAPIList() {
 	ui->APIList->clear();
+	if (apilist_req) {
+		delete apilist_req;
+	}
 	apilist_req = new NetworkRequests(GET,CloudAPIUrl::GET_EXAPI_LIST);
 	apilist_req->start();
 	connect(apilist_req, &NetworkRequests::finished, this, [=](QJsonObject json, QString reply_string, QString error_string) {
@@ -45,6 +48,9 @@ void ExportAPISettingsTab::SyncExAPITable() {
 		
 	QString apiname = ui->APIList->currentText();
 	QString apiid = ui->APIList->currentData().toString();
+    if (exapitk_req) {
+        delete exapitk_req;
+    }
     exapitk_req = new NetworkRequests(POST,MAKE_EXAPI_URL(apiid,"get_token"));
     exapitk_req->start(QJsonObject{
         {"username",ui->APIUser->text()},
@@ -57,6 +63,9 @@ void ExportAPISettingsTab::SyncExAPITable() {
             return;
         }
 		QString token = json["token"].toString();
+		if (exapitb_req) {
+		    delete exapitb_req;
+		}
 		exapitb_req = new NetworkRequests(POST,MAKE_EXAPI_URL(apiid,"get_classtable"));
         exapitb_req->start(QJsonObject{
             {"token",token}

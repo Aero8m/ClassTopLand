@@ -28,7 +28,7 @@ MainTableWidget::MainTableWidget(QWidget *parent)
     {
             SetWindowPos(HWND(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     });
-    topTimer->start(100);
+    topTimer->start(3000);
 #endif
     initSignal();
 
@@ -157,20 +157,20 @@ void MainTableWidget::initAnimation()
     move((scr_w - width()) / 2, 0);
     ui->timer_show->move(width() + ui->timer_show->width(),0);
     // 信息显示动画
-    status_msg_animation = new QPropertyAnimation(ui->status_show,"geometry");
+    status_msg_animation = new QPropertyAnimation(ui->status_show,"geometry",this);
     status_msg_animation->setDuration(500);
     status_msg_animation->setEasingCurve(QEasingCurve::OutExpo);
     status_msg_animation->setStartValue(QRect(width()/2,-78,49,49));
     status_msg_animation->setEndValue(QRect(0,0,width(),49));
     // 窗口隐藏/显示动画
-    hide_animation = new QPropertyAnimation(this,"pos");
+    hide_animation = new QPropertyAnimation(this,"pos",this);
     hide_animation->setDuration(700);
     hide_animation->setEasingCurve(QEasingCurve::InOutExpo);
     hide_animation->setStartValue(pos());
     hide_animation->setEndValue(QPoint(scr_w-154,0));
 
     // 计时器隐藏/显示动画
-    timer_animation = new QPropertyAnimation(ui->timer_show,"pos");
+    timer_animation = new QPropertyAnimation(ui->timer_show,"pos",this);
     timer_animation->setDuration(500);
     timer_animation->setEasingCurve(QEasingCurve::OutExpo);
     timer_animation->setStartValue(ui->timer_show->pos());
@@ -355,7 +355,6 @@ void MainTableWidget::readConfig(){
         write_doc.setObject(config_json);
         file.write(write_doc.toJson());
         file.close();
-        startGetStart();
     }else{
         QFile file(CONFIG_JSON);
         file.open(QIODevice::ReadWrite | QIODevice::Text);
@@ -404,7 +403,10 @@ void refechTableThread::run(){
     for(int idx = 0;idx < today_table.count();)
     {
         // emit windowTop();
-        
+        if (stopFlag) {
+            stopFlag = false;
+            return;
+        }
 
         QDateTime current_date_time = QDateTime::currentDateTime();
         QJsonObject current_class = today_table[idx].toObject();
@@ -507,20 +509,6 @@ QDateTime refechTableThread::getTodayTime(QString str){
     return dateTime;
 }
 
-void MainTableWidget::swithToYiYan(){
-    yiyanDialog *yiyan = new yiyanDialog(this);
-    yiyan->setConfig(Config);
-    yiyan->setZuanYanOpen(ZuanYanisOpen);
-    QScreen *scr = qApp->primaryScreen();
-    int scr_w = scr->size().width();
-    int scr_h = scr->size().height();
-    yiyan->move((scr_w - yiyan->width()) / 2, (scr_h - yiyan->height()) / 3);
-    yiyan->setModal(false);
-    yiyan->show();
-}
-
-
-
 
 QString MainTableWidget::getToken(){
     QNetworkAccessManager *smsManager = new QNetworkAccessManager(this);
@@ -545,12 +533,10 @@ QString MainTableWidget::getToken(){
         }
     }
 }
-void MainTableWidget::on_label_clicked()
-{
-    swithToYiYan();
-}
 void MainTableWidget::hk_slot(QString day){
-    rtt->terminate();
+    rtt->stopFlag = true;
+    rtt->wait(3000);
+    rtt->stopFlag = false;
     if (day.contains("APPEND_",Qt::CaseSensitive)){
         today_table = time_table["appendixTables"].toObject()[day.split("_").last()].toArray();
     }else{
@@ -637,20 +623,6 @@ void MainTableWidget::startMainWindow(){
     mainwin->setModal(false);
     mainwin->show();
 }
-void MainTableWidget::startGetStart(){
-    GetStartWidget *getstart = new GetStartWidget(this);
-    connect(getstart,&GetStartWidget::toSettings,this,&MainTableWidget::on_showConfig_modal);
-
-    QScreen *scr = qApp->primaryScreen();
-    int scr_w = scr->size().width();
-    int scr_h = scr->size().height();
-    getstart->move((scr_w - getstart->width()) / 2, (scr_h - getstart->height()) / 3);
-    getstart->setModal(false);
-    getstart->show();
-    while (getstart->isVisible()){
-        QCoreApplication::processEvents(QEventLoop::AllEvents,1145141919810);
-    }
-}
 void MainTableWidget::createMenu(){
 
     tray_menu = new QMenu(this);
@@ -680,11 +652,11 @@ void MainTableWidget::on_exitAppAction(){
 
 }
 void MainTableWidget::refechTable_slot(){
-    rtt->terminate();
+    rtt->stopFlag = true;
+    rtt->wait(3000);
+    rtt->stopFlag = false;
     readTimeTable();
-
-
-
+    isFinish = true;
     for (QWidget*widget : ui->class_show_widget->findChildren<QWidget*>())
     {
         delete widget;

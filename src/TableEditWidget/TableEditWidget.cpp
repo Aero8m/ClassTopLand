@@ -138,7 +138,6 @@ bool TableEditWidget::timesort(QJsonObject &obj1, QJsonObject &obj2){
     return time1 < time2;
 }
 void TableEditWidget::showEvent(QShowEvent* event){
-
     toggleded();
 }
 void TableEditWidget::closeEvent(QCloseEvent *event){
@@ -148,7 +147,8 @@ void TableEditWidget::closeEvent(QCloseEvent *event){
     event->ignore();
 }
 void TableEditWidget::on_show_AppendixTableManager() {
-    AppendixTableManager *atm = new AppendixTableManager();
+    AppendixTableManager *atm = new AppendixTableManager(this);
+    atm->setAttribute(Qt::WA_DeleteOnClose);
     connect(atm,&AppendixTableManager::editAppendixTable,this,&TableEditWidget::on_editAppendixTable);
     atm->setModal(false);
     atm->show();

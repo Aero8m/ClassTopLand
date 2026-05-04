@@ -1,9 +1,9 @@
 #pragma once
 #include<QUrl>
-#define MAKE_EXAPI_URL(apiname,method) (QUrl(QString("http://ctp.server.aero8m.cn/exapi/%1/%2").arg(apiname, method)))
+#define MAKE_EXAPI_URL(apiname,method) (QUrl(QString("https://ctpserver.aero8m.cn/exapi/%1/%2").arg(apiname, method)))
 namespace CloudAPIUrl {
-	static QUrl MASTER = QUrl("http://ctp.server.aero8m.cn");
-	static QString MASTER_STRING = "http://ctp.server.aero8m.cn";
+	static QUrl MASTER = QUrl("https://ctpserver.aero8m.cn");
+	static QString MASTER_STRING = "https://ctpserver.aero8m.cn";
 	// user api
 	static QUrl REGISTER = QUrl(MASTER_STRING + "/register");
     static QUrl GET_TOKEN = QUrl(MASTER_STRING + "/get_token");

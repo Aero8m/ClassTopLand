@@ -20,7 +20,6 @@ void NetworkRequests::get(QUrl url)
         {
             showLog("Request Error" + reply->errorString(),ERR);
             errorString = reply->errorString();
-            return;
         }else
         {
             showLog(QString("Request ok, Reading..."),INFO);
@@ -29,8 +28,7 @@ void NetworkRequests::get(QUrl url)
             readJson(data);
         }
     });
-    QNetworkReply *reply;
-    reply = netManager->get(request);
+    QNetworkReply* reply = netManager->get(request);
 
 }
 void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonObject cookie,QString ua)

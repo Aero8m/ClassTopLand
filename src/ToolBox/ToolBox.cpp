@@ -107,27 +107,6 @@ int scr_h = scr->size().height();
                 system(QString("%1/%2").arg(x.filePath()).arg(PluginObject["execPath"].toString()).toStdString().c_str());
             });
         }
-        if (PluginObject["type"].toString() == "url"){
-
-            connect(PluginBut,&ClickLabel::clicked,this,[=]{
-                PluginWebEngine* web_window = new PluginWebEngine();
-                web_window->setWindowTitle(PluginObject["name"].toString());
-                web_window->setUrl(QUrl(PluginObject["url"].toString()));
-                web_window->page()->profile()->setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0");
-                web_window->show();
-            });
-        }
-        if (PluginObject["type"].toString() == "html"){
-
-            connect(PluginBut,&ClickLabel::clicked,this,[=]{
-                PluginWebEngine *web_window = new PluginWebEngine();
-                web_window->setWindowTitle(PluginObject["name"].toString());
-                web_window->setUrl(QUrl(x.filePath() + "/" + PluginObject["index"].toString()));
-           
-                web_window->page()->profile()->setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0");
-                web_window->show();
-            });
-        }
         if (PluginObject["type"].toString() == "link"){
 
             connect(PluginBut,&ClickLabel::clicked,this,[=]{

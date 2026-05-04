@@ -40,10 +40,8 @@ public:
     QStringList jilist;
     QJsonArray todos;
     QJsonObject Config;
-    QNetworkAccessManager *smsManager;
-    QNetworkRequest *Request;
+    QNetworkAccessManager *smsManager = nullptr;
     void newTodo(QString name,bool n=false);
-    QNetworkReply* initReply;
     void timerEvent(QTimerEvent *event) override;
 private slots:
     void on_butAdd_clicked();

@@ -25,7 +25,6 @@
 #include <QCloseEvent>
 #include "../TableEditWidget/TableEditWidget.h"
 #include "../YiyanDialog/YiyanDialog.h"
-#include "../GetStartWidget/GetStartWidget.h"
 #include "../MainWindow/MainWindow.h"
 #include"../NetworkRequests/NetworkRequests.h"
 #include<QTranslator>
@@ -63,6 +62,7 @@ public:
             return true;
         }
     }
+    bool stopFlag = false;
 signals:
     void setTable(QString str);
     void repaint();
@@ -89,7 +89,6 @@ public:
     void readTimeTable();
     void readConfig();
     void initTodayTable();
-    void swithToYiYan();
     void createActions();
     void createMenu();
     void setStyleSheetFromFile(QWidget* widget,QString file);
@@ -119,7 +118,6 @@ public slots:
     void refechTable_slot();
     void do_repaint();
     void startMainWindow();
-    void startGetStart();
     void on_showConfig_modal();
     void hk_slot(QString day);
     void showStatus(QString str);
@@ -135,7 +133,6 @@ public slots:
         return width();
     };
 private slots:
-    void on_label_clicked();
     void on_showMainAction();
     void on_exitAppAction();
     void on_hideWindow();

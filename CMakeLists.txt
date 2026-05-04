@@ -28,8 +28,6 @@ find_package(Qt6 COMPONENTS
         Gui
         Widgets
         Network
-        WebEngineWidgets
-        Test
         REQUIRED
 )
 
@@ -84,9 +82,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Core
         Qt::Gui
         Qt::Widgets
-        Qt::Network
-        Qt::WebEngineWidgets
-        Qt::WebEngineCore     # 添加这一行
+        Qt::Network # 添加这一行
         # Qt::WebEnginePrivate  # 如果仍然报错，可以尝试添加
 )
 

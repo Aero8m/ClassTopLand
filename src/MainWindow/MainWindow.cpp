@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ui->time_label->setText("00:00");
     });
-    startTimer(10);
+    startTimer(100);
 }
 
 MainWindow::~MainWindow()
@@ -60,39 +60,36 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
 }
 void MainWindow::showEvent(QShowEvent* event){
-    smsManager = new QNetworkAccessManager(this);
-    smsManager->setProxy(QNetworkProxy::NoProxy);
+    if (!smsManager) {
+        smsManager = new QNetworkAccessManager(this);
+        smsManager->setProxy(QNetworkProxy::NoProxy);
+    }
+
     QString url = QString("https://devapi.qweather.com/v7/weather/now?key=b7f4a7d1bfca4f13b6f265ea8676c297&location=%1").arg(Config["weather_localtion_id"].toString());
-    Request = new QNetworkRequest(QUrl(url));
+    QNetworkRequest request(url);
     QNetworkProxyFactory::setUseSystemConfiguration(false);
-    connect(smsManager , &QNetworkAccessManager::finished, this,[=](QNetworkReply *reply)
-    {
-        showLog(QString("Status Code:%1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()),INFO);
-        if (reply->error())
-        {
-            showLog("Request Error" + reply->errorString(),ERR);
-            return;
-        }else
-        {
-            showLog(QString("Request ok, Reading..."),INFO);
+
+    QNetworkReply* reply = smsManager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [=]() {
+        showLog(QString("Status Code:%1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()), INFO);
+        if (reply->error()) {
+            showLog("Request Error" + reply->errorString(), ERR);
+        } else {
+            showLog(QString("Request ok, Reading..."), INFO);
             QByteArray data = reply->readAll();
             QJsonParseError error;
-            QJsonDocument document = QJsonDocument::fromJson(data,&error);
-            if(document.isNull())
-            {
+            QJsonDocument document = QJsonDocument::fromJson(data, &error);
+            if(document.isNull()) {
                 showLog(QString("JSON Parse Error" + error.errorString()));
-                return;
-            }else
-            {
+            } else {
                 QJsonObject weather = document.object();
-                qDebug()<<weather;
+                qDebug() << weather;
                 ui->weather_icon_show->setStyleSheet(QString("image:url(:/res/qweather_icons/%1.svg)").arg(weather["now"].toObject()["icon"].toString()));
                 ui->weather_show->setText(QString("天气：%1\n温度：%2  体感温度：%3").arg(weather["now"].toObject()["text"].toString()).arg(weather["now"].toObject()["temp"].toString()).arg(weather["now"].toObject()["feelsLike"].toString()));
             }
-
         }
+        reply->deleteLater();
     });
-    initReply = smsManager ->get(*Request);
 }
 
 void MainWindow::on_butAdd_clicked()
@@ -116,8 +113,8 @@ void MainWindow::on_butAdd_clicked()
 }
 void MainWindow::newTodo(QString name,bool n){
     QString todoText = name;
-    QWidget* itemWidget = new QWidget;
-    QHBoxLayout* hlayout = new QHBoxLayout;
+    QWidget* itemWidget = new QWidget(ui->listWidget);
+    QHBoxLayout* hlayout = new QHBoxLayout(itemWidget);
     QCheckBox* okbox = new QCheckBox(itemWidget);
     okbox->setObjectName("okbox");
     todos.append(todoText);

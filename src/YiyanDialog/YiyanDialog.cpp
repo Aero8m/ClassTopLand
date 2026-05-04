@@ -17,6 +17,7 @@ yiyanDialog::yiyanDialog(QWidget *parent)
     ani_opty->setDuration(500);
     ani_opty->setStartValue(0);
     ani_opty->setEndValue(1);
+    back_show = nullptr;
     readConfig();
     QTranslator translator;
     QLocale::Language lab = QLocale::system().language();
@@ -35,6 +36,9 @@ yiyanDialog::yiyanDialog(QWidget *parent)
 
 yiyanDialog::~yiyanDialog()
 {
+    if (back_show) {
+        delete back_show;
+    }
     delete ui;
 }
 void yiyanDialog::paintEvent(QPaintEvent *event)
@@ -48,7 +52,6 @@ bool yiyanDialog::eventFilter(QObject* watched,QEvent* event){
         if (mouse_event->buttons() == Qt::LeftButton){
             startPos = mouse_event->pos();
             tracking = true;
-            // move(mouse_event->this->pos()()-QPoint(this->width()/2,0));
             return true;
         }
     }
@@ -57,12 +60,14 @@ bool yiyanDialog::eventFilter(QObject* watched,QEvent* event){
 
             endPos = mouse_event->pos() - startPos;
             move(pos() + endPos - QPoint(width()/2,0));
-            back_show = new QPropertyAnimation(this,"pos");
+
+            if (!back_show) {
+                back_show = new QPropertyAnimation(this,"pos", this);
+                back_show->setEasingCurve(QEasingCurve::InOutSine);
+                back_show->setDuration(500);
+            }
             back_show->setStartValue(pos() - QPoint(0,100));
             back_show->setEndValue(pos());
-
-            back_show->setEasingCurve(QEasingCurve::InOutSine);
-            back_show->setDuration(500);
             return true;
 
     }
@@ -75,12 +80,15 @@ bool yiyanDialog::eventFilter(QObject* watched,QEvent* event){
     }
     if (event->type() == QEvent::Show){
         refechYiYan();
-        back_show = new QPropertyAnimation(this,"pos");
+
+        if (!back_show) {
+            back_show = new QPropertyAnimation(this,"pos", this);
+            back_show->setEasingCurve(QEasingCurve::InOutSine);
+            back_show->setDuration(500);
+        }
         back_show->setStartValue(pos() - QPoint(0,100));
         back_show->setEndValue(pos());
 
-        back_show->setEasingCurve(QEasingCurve::InOutSine);
-        back_show->setDuration(500);
         back_show->setDirection(QAbstractAnimation::Forward);
         ani_opty->setDirection(QAbstractAnimation::Forward);
         ani_opty->start();
