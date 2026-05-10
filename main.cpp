@@ -162,7 +162,6 @@ int main(int argc, char *argv[])
     int scr_h = physicalSize.height();
     qDebug() << "scr_w:" << scr_w;
     qDebug() << "scr_h:" << scr_h;
-    w->move((scr_w-w->width())/2, 0);
     ToolBox *tb = new ToolBox();
     qDebug() << w->pos();
 
@@ -176,6 +175,7 @@ int main(int argc, char *argv[])
     if (TimerisOpen()) {
         dtw->show();
     }
+    w->showWindow(scr_w, scr_h);
 #else
     QScreen *scr = a.primaryScreen();
     int scr_w = scr->size().width();
