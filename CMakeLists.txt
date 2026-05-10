@@ -8,10 +8,9 @@ set(CMAKE_AUTOUIC ON)         # 自动调用 uic
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #set(NIGHTLY_RELEASE ON)
 # 设置 Qt 的查找路径（可选）
-#if (UNIX AND NOT APPLE)
-#    set(CMAKE_PREFIX_PATH "/home/jiahang/Qt/6.7.3/gcc_64/lib/cmake/")
-#else
-if(WIN32 AND NOT NIGHTLY_RELEASE)
+if (UNIX AND NOT APPLE)
+    set(CMAKE_PREFIX_PATH "/home/jiahang/Qt/6.7.3/gcc_64/lib/cmake/")
+elseif(WIN32 AND NOT NIGHTLY_RELEASE)
     set(CMAKE_PREFIX_PATH "C:/Qt/6.9.3/msvc2022_64/lib/cmake")
 elseif(APPLE)
     set(CMAKE_PREFIX_PATH "/Users/jiahang/Qt/6.7.3/macos/lib/cmake/")
@@ -29,8 +28,6 @@ find_package(Qt6 COMPONENTS
         Gui
         Widgets
         Network
-        GuiPrivate
-        Test
         REQUIRED
 )
 
@@ -87,7 +84,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Widgets
         Qt::Network # 添加这一行
         # Qt::WebEnginePrivate  # 如果仍然报错，可以尝试添加
-        Qt::GuiPrivate
+        #Qt::GuiPrivate
         Qt::Test
 )
 
