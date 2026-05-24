@@ -27,26 +27,16 @@ if (UNIX AND NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
 endif()
 # 查找 Qt6 组件
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_package(Qt6 COMPONENTS
-            Core
-            Gui
-            Widgets
-            Network
-            GuiPrivate
-            Test
-            REQUIRED
-    )
-else()
-    find_package(Qt6 COMPONENTS
-            Core
-            Gui
-            Widgets
-            Network
-            Test
-            REQUIRED
-    )
-endif()
+find_package(Qt6 COMPONENTS
+        Core
+        Gui
+        Widgets
+        Network
+        GuiPrivate
+        Test
+        REQUIRED
+)
+
 
 
 # 收集 src 及其子目录中的源文件
@@ -95,24 +85,15 @@ if (UNIX AND NOT APPLE)
     target_include_directories(ClassTopLand PRIVATE ${X11_INCLUDE_DIR})
     target_link_libraries(ClassTopLand PRIVATE ${X11_LIBRARIES})
 endif()
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-            Qt::Core
-            Qt::Gui
-            Qt::Widgets
-            Qt::Network
-            Qt::GuiPrivate
-            Qt::Test
-    )
-else()
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-            Qt::Core
-            Qt::Gui
-            Qt::Widgets
-            Qt::Network
-            Qt::Test
-    )
-endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        Qt::Network
+        Qt::GuiPrivate
+        Qt::Test
+)
+
 
 
 # 如果你需要显式包含某些目录（比如头文件放在 include/ 中），可以加上：
