@@ -42,13 +42,13 @@ struct WindowCompositionAttributeData {
 #ifdef __APPLE__
 #endif
 
+BackgroundEventFilter::BackgroundEventFilter(QObject *parent) : QObject(parent) {}
+
 void GlassHelper::enableBlurBehind(QWidget *widget,int alpha) {
 #ifdef __linux__
     enableBlurBehindX11(widget);
-    auto *panel = new QWidget(widget);
-    panel->setGeometry(widget->geometry());
-    panel->setStyleSheet("background-color: rgba(255, 255, 255, 0.2);");
-    panel->lower();
+    auto *filter = new BackgroundEventFilter(widget);
+    widget->installEventFilter(filter);
 #elifdef _WIN32
     enableBlurBehindWin32(widget,alpha);
 #elifdef __APPLE__
