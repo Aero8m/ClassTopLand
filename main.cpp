@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
     if (ToolBoxisOpen()){
         tb->show();
     }
-    tb->move(scr_w - tb->width(), (scr_h - tb->height()) / 2 * 0.6);
+    tb->move((scr_w - tb->width()) * 0.9975, (scr_h - tb->height()) / 2*0.9);
     DayTimerWidget *dtw = new DayTimerWidget();
     dtw->move((scr_w - dtw->width()),(scr_h - dtw->height()) * 0.95);
     if (TimerisOpen()) {
