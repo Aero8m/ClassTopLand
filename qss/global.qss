@@ -278,6 +278,7 @@ QComboBox QAbstractItemView::item:selected {
 	background-color: #1191d3;
 }
 /*Qmenu Style Sheets*/
+/*
  QMenu {
      background-color: white; /* sets background of the menu 设置整个菜单区域的背景色，我用的是白色：white*/
      border-radius: 5px;
@@ -297,6 +298,7 @@ QComboBox QAbstractItemView::item:selected {
      background-color: #1191d3;/*这一句是设置菜单项鼠标经过选中的样式*/
      color:white;
  }
+ */
 
 QInputDialog QPushButton{
 	background:#1191d3; 
