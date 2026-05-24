@@ -6,6 +6,10 @@ set(CMAKE_AUTOMOC ON)         # 自动调用 moc
 set(CMAKE_AUTORCC ON)         # 自动调用 rcc
 set(CMAKE_AUTOUIC ON)         # 自动调用 uic
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
 #set(NIGHTLY_RELEASE ON)
 # 设置 Qt 的查找路径（可选）
 if (UNIX AND NOT APPLE)
@@ -23,7 +27,7 @@ if (UNIX AND NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
 endif()
 # 查找 Qt6 组件
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     find_package(Qt6 COMPONENTS
             Core
             Gui
@@ -91,7 +95,7 @@ if (UNIX AND NOT APPLE)
     target_include_directories(ClassTopLand PRIVATE ${X11_INCLUDE_DIR})
     target_link_libraries(ClassTopLand PRIVATE ${X11_LIBRARIES})
 endif()
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries(${PROJECT_NAME} PRIVATE
             Qt::Core
             Qt::Gui
