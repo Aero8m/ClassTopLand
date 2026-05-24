@@ -15,8 +15,7 @@ public:
     #endif
     #ifdef _WIN32
     static void enableBlurBehindWin32(QWidget* widget,int alpha);
-#endif
-
+    #endif
 
 };
 
