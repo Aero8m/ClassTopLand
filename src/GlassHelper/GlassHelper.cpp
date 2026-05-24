@@ -47,7 +47,6 @@ void GlassHelper::enableBlurBehind(QWidget *widget,int alpha) {
     enableBlurBehindX11(widget);
     auto *panel = new QWidget(widget);
     panel->setGeometry(widget->geometry());
-    // 直接设置 rgba，白色(255,255,255)，Alpha 128
     panel->setStyleSheet("background-color: rgba(255, 255, 255, 0.2);");
     panel->lower();
 #elifdef _WIN32
