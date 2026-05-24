@@ -45,10 +45,14 @@ struct WindowCompositionAttributeData {
 void GlassHelper::enableBlurBehind(QWidget *widget,int alpha) {
 #ifdef __linux__
     enableBlurBehindX11(widget);
+    auto *panel = new QWidget(widget);
+    panel->setGeometry(widget->geometry());
+    // 直接设置 rgba，白色(255,255,255)，Alpha 128
+    panel->setStyleSheet("background-color: rgba(255, 255, 255, 0.2);");
+    panel->lower();
 #elifdef _WIN32
     enableBlurBehindWin32(widget,alpha);
 #elifdef __APPLE__
-    qDebug() << QString("%1 {background: rgba(255,255,255,0.7);}").arg(widget->metaObject()->className());
     widget->setStyleSheet(QString("%1 {background-color: rgba(255,255,255,0.7);}").arg(widget->metaObject()->className()));
 #endif
 

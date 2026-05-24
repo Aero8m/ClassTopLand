@@ -23,14 +23,27 @@ if (UNIX AND NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
 endif()
 # 查找 Qt6 组件
-find_package(Qt6 COMPONENTS
-        Core
-        Gui
-        Widgets
-        Network
-        Test
-        REQUIRED
-)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    find_package(Qt6 COMPONENTS
+            Core
+            Gui
+            Widgets
+            Network
+            GuiPrivate
+            Test
+            REQUIRED
+    )
+else()
+    find_package(Qt6 COMPONENTS
+            Core
+            Gui
+            Widgets
+            Network
+            Test
+            REQUIRED
+    )
+endif()
+
 
 # 收集 src 及其子目录中的源文件
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp" "src/*.h" "src/*.ui")
@@ -78,16 +91,24 @@ if (UNIX AND NOT APPLE)
     target_include_directories(ClassTopLand PRIVATE ${X11_INCLUDE_DIR})
     target_link_libraries(ClassTopLand PRIVATE ${X11_LIBRARIES})
 endif()
-# 链接需要的 Qt 库
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
-        Qt::Network # 添加这一行
-        # Qt::WebEnginePrivate  # 如果仍然报错，可以尝试添加
-        #Qt::GuiPrivate
-        Qt::Test
-)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            Qt::Core
+            Qt::Gui
+            Qt::Widgets
+            Qt::Network
+            Qt::GuiPrivate
+            Qt::Test
+    )
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            Qt::Core
+            Qt::Gui
+            Qt::Widgets
+            Qt::Network
+            Qt::Test
+    )
+endif()
 
 
 # 如果你需要显式包含某些目录（比如头文件放在 include/ 中），可以加上：

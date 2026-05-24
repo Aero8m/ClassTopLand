@@ -2,6 +2,7 @@
 #define GLASSHELPER_H
 
 #include <QWidget>
+#include<QPalette>
 enum SystemType {
     Windows10p,
     Windows10d
@@ -15,8 +16,7 @@ public:
     #endif
     #ifdef _WIN32
     static void enableBlurBehindWin32(QWidget* widget,int alpha);
-#endif
-
+    #endif
 
 };
 
