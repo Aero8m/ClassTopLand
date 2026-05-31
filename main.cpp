@@ -1,5 +1,4 @@
 #include "./src/MainTableWidget/MainTableWidget.h"
-#include "./src/ToolBox/ToolBox.h"
 #include"./src/DayTimerWidget/DayTimerWidget.h"
 #include <QApplication>
 #include <QLocale>
@@ -16,35 +15,7 @@
 
 #include"./src/AppLog/AppLog.h"
 #include"./src/NetworkRequests/NetworkRequests.h"
-#include"./src/SyncingDialog/SyncingDialog.h"
 #include "./src/Utils/Utils.h"
-bool ToolBoxisOpen(){
-    QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    file.open(QIODevice::ReadWrite | QIODevice::Text);
-
-    QTextStream stream(&file);
-    QString file_str = stream.readAll();
-    file.close();
-    QJsonParseError jsonError;
-    QJsonDocument jsondoc = QJsonDocument::fromJson(file_str.toUtf8(),&jsonError);
-    if (jsonError.error != QJsonParseError::NoError && !jsondoc.isNull()) {
-        showLog("Config.json is Error!",LogStatus::ERR);
-        return true;
-    }
-    QJsonObject Config = jsondoc.object();
-    if (Config.contains("toolbox_status")){
-        if (Config["toolbox_status"].toBool()){
-            showLog("ToolBox is Not Show",LogStatus::INFO);
-            return false;
-        }else{
-            showLog("ToolBox is Show",LogStatus::INFO);
-            return true;
-        }
-
-    }
-    showLog("ToolBox is Show",LogStatus::INFO);
-    return true;
-}
 bool TimerisOpen(){
     QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
     file.open(QIODevice::ReadWrite | QIODevice::Text);
@@ -71,32 +42,6 @@ bool TimerisOpen(){
     }
     showLog("Timer is Show",LogStatus::INFO);
     return true;
-}
-bool SyncisOpen(){
-    QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    file.open(QIODevice::ReadWrite | QIODevice::Text);
-
-    QTextStream stream(&file);
-    QString file_str = stream.readAll();
-    file.close();
-    QJsonParseError jsonError;
-    QJsonDocument jsondoc = QJsonDocument::fromJson(file_str.toUtf8(),&jsonError);
-    if (jsonError.error != QJsonParseError::NoError && !jsondoc.isNull()) {
-        showLog("Config.json is Error!",LogStatus::ERR);
-        return true;
-    }
-    QJsonObject Config = jsondoc.object();
-    if (Config.contains("sync_open")){
-        if (!Config["sync_open"].toBool()){
-            showLog("Sync is Not Open",LogStatus::INFO);
-            return false;
-        }else{
-            showLog("Sync is open",LogStatus::INFO);
-            return true;
-        }
-    }
-    showLog("Sync is not open",LogStatus::INFO);
-    return false;
 }
 void printLogo() {
     QFile file(":/res/logo.txt");
@@ -141,12 +86,6 @@ int main(int argc, char *argv[])
     a.setStyleSheet(getStyleSheet(":/qss/global.qss"));
     QApplication::setQuitOnLastWindowClosed(false);
     showLog("MainWindow is Show",LogStatus::INFO);
-    SyncingDialog *syncDialog = new SyncingDialog();
-
-    if (SyncisOpen())
-    {
-        syncDialog->syncRemoteJson();
-    }
     MainTableWidget *w = new MainTableWidget();
 
 
@@ -160,16 +99,6 @@ int main(int argc, char *argv[])
     QSize physicalSize = logicalSize * ratio;
     int scr_w = physicalSize.width();
     int scr_h = physicalSize.height();
-    qDebug() << "scr_w:" << scr_w;
-    qDebug() << "scr_h:" << scr_h;
-    ToolBox *tb = new ToolBox();
-    qDebug() << w->pos();
-
-    qDebug() << tb->pos();
-    if (ToolBoxisOpen()){
-        tb->show();
-    }
-    tb->move((scr_w - tb->width()) * 0.9975, (scr_h - tb->height()) / 2*0.9);
     DayTimerWidget *dtw = new DayTimerWidget();
     dtw->move((scr_w - dtw->width()),(scr_h - dtw->height()) * 0.95);
     if (TimerisOpen()) {
@@ -182,17 +111,11 @@ int main(int argc, char *argv[])
     int scr_h = scr->size().height();
     // w->move((scr_w - w->width()) / 2, 0);
     w->showWindow(scr_w, scr_h);
-    ToolBox *tb = new ToolBox();
-    tb->move((scr_w - tb->width()) * 0.9975, (scr_h - tb->height()) / 2*0.9);
-    if (ToolBoxisOpen()){
-        tb->show();
-    }
     DayTimerWidget *dtw = new DayTimerWidget();
     dtw->move((scr_w - dtw->width()),(scr_h - dtw->height()) * 0.95);
     if (TimerisOpen()) {
         dtw->show();
     }
 #endif
-    QObject::connect(w->EditWindow,&TableEditWidget::refechToolBar_signal,tb,&ToolBox::LoadPlugins);
     return a.exec();
 }

@@ -24,8 +24,6 @@
 #include<QProcess>
 #include <QCloseEvent>
 #include "../TableEditWidget/TableEditWidget.h"
-#include "../YiyanDialog/YiyanDialog.h"
-#include "../MainWindow/MainWindow.h"
 #include"../NetworkRequests/NetworkRequests.h"
 #include<QTranslator>
 #include"../AppLog/AppLog.h"
@@ -96,9 +94,10 @@ public:
     TableEditWidget *EditWindow;
     QMenu *tray_menu;
     QAction *m_showedit;
-    QAction *m_gongde;
+   // QAction *m_gongde;
     QAction *m_exitApp;
-    QAction *m_hidewindow;
+    //QAction *m_hidewindow;
+    QAction *m_huanke;
     QSystemTrayIcon *m_sysTrayIcon; //系统托盘
     bool ZuanYanisOpen = false;
     bool TodoisOpeninBack = false;
@@ -117,18 +116,14 @@ public:
 public slots:
     void refechTable_slot();
     void do_repaint();
-    void startMainWindow();
     void on_showConfig_modal();
-    void hk_slot(QString day);
+    void hk_slot();
     void showStatus(QString str);
     void initAnimation();
     // void do_pss();
     // void do_pst();
     // void do_tss();
     // void do_tst();
-    void on_startTimer(QString timer_str);
-    void on_stopTimer();
-    void on_timerisStart(bool &st);
     int on_getWidth() {
         return width();
     };
@@ -136,11 +131,9 @@ private slots:
     void on_showMainAction();
     void on_exitAppAction();
     void on_hideWindow();
-    void on_showTimer();
     void on_getTimer(int &m,int &s);
 
 signals:
-    void showTimer();
     void reText();
 private:
     Ui::MainTableWidget *ui;
@@ -154,7 +147,6 @@ private:
     qint64 min_time=0;
     qint64 sec_time=0;
     QTimer* topTimer;
-    void timerEvent(QTimerEvent *event);
     int scr_w;
     int scr_h;
     bool isFinish = false;

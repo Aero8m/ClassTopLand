@@ -60,66 +60,6 @@ bool refechTableThread::WhetherProcessRunning(QString& processName)
     // return swid != NULL;
     return false;
 }
-void MainTableWidget::on_startTimer(QString timer_str)
-{
-    timerStart = true;
-    QStringList strList = timer_str.split(":");
-    min_time = strList[0].toLongLong();
-    sec_time = strList[1].toLongLong();
-    if (min_time == 0 && sec_time == 0)
-    {
-        timerStart=false;
-        showStatus("倒计时结束");
-        return;
-    }
-    timer_id = startTimer(1000);
-
-}
-void MainTableWidget::on_stopTimer()
-{
-    timerStart = false;
-    killTimer(timer_id);
-}
-void MainTableWidget::on_timerisStart(bool &st)
-{
-    st = timerStart;
-}
-void MainTableWidget::timerEvent(QTimerEvent *event)
-{
-
-    if (sec_time == 0 && min_time >0)
-    {
-        sec_time = 59;
-        min_time--;
-    }else
-    {
-        sec_time--;
-    }
-    if (min_time == 0 && sec_time == 0)
-    {
-        timerStart=false;
-        killTimer(timer_id);
-        showStatus("倒计时结束");
-        emit reText();
-        return;
-    }
-    ui->label_4->setText(QString("%1:%2").arg(min_time, 2, 10, QLatin1Char('0')).arg(sec_time, 2, 10, QLatin1Char('0')));
-    if (sec_time % 15 ==0 || (min_time == 0 && sec_time == 5))
-    {
-        emit showTimer();
-
-    }
-}
-void MainTableWidget::on_showTimer()
-{
-    timer_animation->setDirection(QAbstractAnimation::Forward);
-    timer_animation->start();
-    QEventLoop loop;//定义一个新的事件循环
-    QTimer::singleShot(5000, &loop, SLOT(quit()));//创建单次定时器，槽函数为事件循环的退出函数
-    loop.exec();//事件循环开始执行，程序会卡在这里，直到定时时间到，本循环被退出
-    timer_animation->setDirection(QAbstractAnimation::Backward);
-    timer_animation->start();
-}
 void MainTableWidget::showStatus(QString str)
 {
     showLog("ShowStatused!",INFO);
@@ -155,7 +95,6 @@ void MainTableWidget::initAnimation()
     int scr_h = scr->size().height();
     move((scr_w - width()) / 2, 0);
     move((scr_w - width()) / 2, 0);
-    ui->timer_show->move(width() + ui->timer_show->width(),0);
     // 信息显示动画
     status_msg_animation = new QPropertyAnimation(ui->status_show,"geometry",this);
     status_msg_animation->setDuration(500);
@@ -168,14 +107,6 @@ void MainTableWidget::initAnimation()
     hide_animation->setEasingCurve(QEasingCurve::InOutExpo);
     hide_animation->setStartValue(pos());
     hide_animation->setEndValue(QPoint(scr_w-154,0));
-
-    // 计时器隐藏/显示动画
-    timer_animation = new QPropertyAnimation(ui->timer_show,"pos",this);
-    timer_animation->setDuration(500);
-    timer_animation->setEasingCurve(QEasingCurve::OutExpo);
-    timer_animation->setStartValue(ui->timer_show->pos());
-    timer_animation->setEndValue(QPoint(width()-ui->timer_show->width(),0));
-
 
 }
 
@@ -290,7 +221,6 @@ void MainTableWidget::initSignal(){
     },Qt::QueuedConnection);
     connect(rtt,&refechTableThread::initMainWindowAnimation,this,&MainTableWidget::initAnimation,Qt::QueuedConnection);
     connect(ui->hide_window,&QPushButton::clicked,this,&MainTableWidget::on_hideWindow);
-    connect(this,&MainTableWidget::showTimer,this,&MainTableWidget::on_showTimer,Qt::QueuedConnection);
     connect(rtt, &refechTableThread::windowTop, this, [=] {
         // SetWindowPos(HWND(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
             // if (IsWindowFullyCovered(HWND(winId())))
@@ -533,10 +463,39 @@ QString MainTableWidget::getToken(){
         }
     }
 }
-void MainTableWidget::hk_slot(QString day){
+void MainTableWidget::hk_slot(){
+    QStringList items;
+    items << "星期一" << "星期二" << "星期三" << "星期四" << "星期五";
+    QMap<QString,QString> en_cnday;
+    en_cnday["星期一"] = "Mon";
+    en_cnday["星期二"] = "Tue";
+    en_cnday["星期三"] = "Wed";
+    en_cnday["星期四"] = "Thu";
+    en_cnday["星期五"] = "Fri";
+    QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    file.open(QIODevice::ReadWrite | QIODevice::Text);
+    QTextStream stream(&file);
+    QString file_str = stream.readAll();
+    file.close();
+    QJsonParseError jsonError;
+    QJsonDocument jsondoc = QJsonDocument::fromJson(file_str.toUtf8(),&jsonError);
+    if (jsonError.error != QJsonParseError::NoError && !jsondoc.isNull()) {
+        showLog("table.json is Error!",LogStatus::ERR);
+        return;
+    }
+    QJsonObject appendixTables = jsondoc.object()["appendixTables"].toObject();
+    for (auto iter = appendixTables.begin();iter != appendixTables.end();iter++){
+        items << "附加课表：" + iter.key();
+        en_cnday["附加课表：" + iter.key()] = "APPEND_" + iter.key();
+    }
+    bool ok;
+    QString cnday = QInputDialog::getItem(nullptr,"换课","选择使用的星期或附加课表",items,0,false,&ok);
+    if (!ok) return;
+    QString day = en_cnday[cnday];
     rtt->stopFlag = true;
     rtt->wait(3000);
     rtt->stopFlag = false;
+    isFinish = false;
     if (day.contains("APPEND_",Qt::CaseSensitive)){
         today_table = time_table["appendixTables"].toObject()[day.split("_").last()].toArray();
     }else{
@@ -550,10 +509,8 @@ void MainTableWidget::hk_slot(QString day){
     resize(154+20+today_table.count()*49,height());
     ui->stackedWidget->resize(154+20+today_table.count()*49,height());
     ui->status_show->resize(154+20+today_table.count()*49,height());
-    QScreen *scr = qApp->primaryScreen();
-    int scr_w = scr->size().width();
-    int scr_h = scr->size().height();
-    move((scr_w - width()) / 2, 0);
+
+    if (WindowHide) on_hideWindow();
 }
 
 
@@ -579,7 +536,7 @@ void MainTableWidget::initSysTrayIcon()
                 switch(reason)
                 {
                 case QSystemTrayIcon::Trigger:
-                    m_showmain->activate(QAction::Trigger);
+                    m_showedit->activate(QAction::Trigger);
                     break;
                 default:
                     break;
@@ -597,40 +554,19 @@ void MainTableWidget::initSysTrayIcon()
 void MainTableWidget::createActions(){
     m_showedit = new QAction(tr("设置"),this);
     connect(m_showedit,SIGNAL(triggered()),this,SLOT(on_showMainAction()));
-    m_showmain = new QAction(tr("打开主界面"),this);
-    connect(m_showmain,&QAction::triggered,this,&MainTableWidget::startMainWindow);
+    // m_showmain = new QAction(tr("打开主界面"),this);
+    // connect(m_showmain,&QAction::triggered,this,&MainTableWidget::startMainWindow);
     m_exitApp = new QAction(tr("退出"),this);
     connect(m_exitApp,SIGNAL(triggered()),this,SLOT(on_exitAppAction()));
-    if (Config["muyu_status"].toBool()){
-        m_gongde = new QAction(tr("功德：") + QString::number(Config.value("gd").toInteger()),this);
-    }/*else{
-        m_gongde = new QAction("φ(*￣0￣)",this);
-    }*/
+    m_huanke = new QAction(tr("临时换课"),this);
+    connect(m_huanke,&QAction::triggered,this,&MainTableWidget::hk_slot);
 
-}
-void MainTableWidget::startMainWindow(){
-    MainWindow *mainwin = new MainWindow(this);
-    connect(mainwin,&MainWindow::hk,this,&MainTableWidget::hk_slot);
-    connect(mainwin,&MainWindow::timerisStart,this,&MainTableWidget::on_timerisStart);
-    connect(mainwin,&MainWindow::stopTm,this,&MainTableWidget::on_stopTimer);
-    connect(mainwin,&MainWindow::startTm,this,&MainTableWidget::on_startTimer);
-    connect(mainwin,&MainWindow::getTimer,this,&MainTableWidget::on_getTimer);
-    connect(this,&MainTableWidget::reText,mainwin,&MainWindow::on_reText);
-    QScreen *scr = qApp->primaryScreen();
-    int scr_w = scr->size().width();
-    int scr_h = scr->size().height();
-    mainwin->move((scr_w - mainwin->width()) / 2, (scr_h - mainwin->height()) / 3);
-    mainwin->setModal(false);
-    mainwin->show();
 }
 void MainTableWidget::createMenu(){
 
     tray_menu = new QMenu(this);
     tray_menu->addAction(m_showedit);
-    tray_menu->addAction(m_showmain);
-    if (Config["muyu_status"].toBool()){
-        tray_menu->addAction(m_gongde);
-    }
+    tray_menu->addAction(m_huanke);
     tray_menu->addSeparator();
     tray_menu->addAction(m_exitApp);
     m_sysTrayIcon->setContextMenu(tray_menu);
@@ -656,7 +592,7 @@ void MainTableWidget::refechTable_slot(){
     rtt->wait(3000);
     rtt->stopFlag = false;
     readTimeTable();
-    isFinish = true;
+    isFinish = false;
     for (QWidget*widget : ui->class_show_widget->findChildren<QWidget*>())
     {
         delete widget;
@@ -665,10 +601,11 @@ void MainTableWidget::refechTable_slot(){
     resize(154+20+today_table.count()*49,height());
     ui->stackedWidget->resize(154+20+today_table.count()*49,height());
     ui->status_show->resize(154+20+today_table.count()*49,height());
-    QScreen *scr = qApp->primaryScreen();
-    int scr_w = scr->size().width();
-    int scr_h = scr->size().height();
-    move((scr_w - width()) / 2, 0);
+    // QScreen *scr = qApp->primaryScreen();
+    // int scr_w = scr->size().width();
+    // int scr_h = scr->size().height();
+    // move((scr_w - width()) / 2, 0);
+    if (WindowHide) on_hideWindow();
     m_sysTrayIcon->showMessage(tr("提示"),tr("配置已成功应用！"),QSystemTrayIcon::MessageIcon::Information,500);
 
 }

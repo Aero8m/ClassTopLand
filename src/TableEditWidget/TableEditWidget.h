@@ -37,56 +37,6 @@
 namespace Ui {
 class TableEditWidget;
 }
-#include <QPainter>
-#include <QProxyStyle>
-
-// class CustomTabStyle : public QProxyStyle
-// {
-// public:
-//     QSize sizeFromContents(ContentsType type, const QStyleOption *option,
-//         const QSize &size, const QWidget *widget) const
-//     {
-//         QSize s = QProxyStyle::sizeFromContents(type, option, size, widget);
-//         if (type == QStyle::CT_TabBarTab) {
-//             s.transpose();
-//             s.rwidth() = 90; // 设置每个tabBar中item的大小
-//             s.rheight() = 44;
-//         }
-//         return s;
-//     }
-//
-//     void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
-//     {
-//         if (element == CE_TabBarTabLabel) {
-//             if (const QStyleOptionTab *tab = qstyleoption_cast<const QStyleOptionTab *>(option)) {
-//                 QRect allRect = tab->rect;
-//
-//                 if (tab->state & QStyle::State_Selected) {
-//                     painter->save();
-//                     painter->setPen(0x89cfff);
-//                     painter->setBrush(QBrush(0x89cfff));
-//                     painter->drawRect(allRect.adjusted(6, 6, -6, -6));
-//                     painter->restore();
-//                 }
-//                 QTextOption option;
-//                 option.setAlignment(Qt::AlignCenter);
-//                 if (tab->state & QStyle::State_Selected) {
-//                     painter->setPen(0xf8fcff);
-//                 }
-//                 else {
-//                     painter->setPen(0x5d5d5d);
-//                 }
-//
-//                 painter->drawText(allRect, tab->text, option);
-//                 return;
-//             }
-//         }
-//
-//         if (element == CE_TabBarTab) {
-//             QProxyStyle::drawControl(element, option, painter, widget);
-//         }
-//     }
-// };
 class TableEditWidget : public QWidget
 {
     Q_OBJECT
@@ -96,7 +46,6 @@ public:
     void setConfig(QJsonObject obj);
     
     ~TableEditWidget();
-    bool eventFilter(QObject *watched,QEvent* e) override;
     
 private:
     void showEvent(QShowEvent* event) override;
@@ -105,7 +54,6 @@ private:
     
     void closeEvent(QCloseEvent* event) override;
     void addItem(QString key);
-    void readPluginList();
     static bool timesort(QJsonObject& obj1, QJsonObject& obj2);
     QTime getTodayTime(QString str) {
         QString timeString = str;
@@ -125,13 +73,6 @@ private slots:
     void on_checkBox_clicked(bool checked);
 
     void on_chkHide_clicked(bool checked);
-
-    void _searchWeatherLocaltions();
-    void saveWeatherLocaltions();
-
-    void on_pluginList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-
-    void on_pluginList_itemDoubleClicked(QListWidgetItem *item);
 
     void on_show_AppendixTableManager();
     void on_timerInfo_changed();
