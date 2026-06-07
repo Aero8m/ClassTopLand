@@ -42,7 +42,7 @@ class MainTableWidget;
 
 }
 QT_END_NAMESPACE
-class refechTableThread:public QThread{
+class RefetchTableThread : public QThread{
     Q_OBJECT
 public:
     QDateTime getTodayTime(QString str);
@@ -51,9 +51,9 @@ public:
     bool canShow(QString text) {
         QFont ft("Microsoft YaHei UI",18);// 获取当前字体的格式，里面有文本大小和文本像素大小
         QFontMetrics fm(ft); // 以当前的字体格式为基础
-        int text_wpixel = fm.horizontalAdvance(text); //以当前的字体格式为基础,计算字体的像素宽度
-        qDebug() << "text_wpixel:" << text_wpixel << "getWidth():" << getWidth() << "getWidth() - 60:" << getWidth() - 60;
-        if (text_wpixel > emit getWidth() - 60) {
+        int textWidthPixel = fm.horizontalAdvance(text); //以当前的字体格式为基础,计算字体的像素宽度
+        qDebug() << "textWidthPixel:" << textWidthPixel << "getWidth():" << getWidth() << "getWidth() - 60:" << getWidth() - 60;
+        if (textWidthPixel > emit getWidth() - 60) {
             return false;
         }
         else {
@@ -74,14 +74,14 @@ signals:
     void windowTop();
     int getWidth();
 private:
-    bool WhetherProcessRunning(QString& processName);
+    bool isProcessRunning(QString& processName);
 };
 class MainTableWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    bool TodoisOpen=false;
+    bool todoIsOpen = false;
     MainTableWidget(QWidget *parent = nullptr);
     ~MainTableWidget();
     void readTimeTable();
@@ -90,41 +90,31 @@ public:
     void createActions();
     void createMenu();
     void setStyleSheetFromFile(QWidget* widget,QString file);
-    void showWindow(int scr_w, int scr_h);
-    TableEditWidget *EditWindow;
-    QMenu *tray_menu;
-    QAction *m_showedit;
-   // QAction *m_gongde;
-    QAction *m_exitApp;
-    //QAction *m_hidewindow;
-    QAction *m_huanke;
-    QSystemTrayIcon *m_sysTrayIcon; //系统托盘
-    bool ZuanYanisOpen = false;
-    bool TodoisOpeninBack = false;
-    refechTableThread* rtt;
+    TableEditWidget *editWindow;
+    QMenu *trayMenu;
+    QAction *showEditAction;
+    QAction *exitAppAction;
+    QAction *huanKeAction;
+    QSystemTrayIcon *sysTrayIcon; //系统托盘
+    bool zuanYanIsOpen = false;
+    bool todoIsOpenInBack = false;
+    RefetchTableThread* refetchThread;
     QString getToken();
-    QPropertyAnimation* status_msg_animation;
-    QPropertyAnimation* hide_animation;
-    QPropertyAnimation* timer_animation;
-    QPropertyAnimation* window_show_animation;
-    QAction* m_showmain;
-    QJsonObject Config;
-    bool ishide = false;
+    QPropertyAnimation* statusMsgAnimation;
+    QPropertyAnimation* hideAnimation;
+    QAction* showMainAction;
+    QJsonObject config;
+    bool isHidden = false;
     int flag = 0;
-    NetworkRequests req;
+    NetworkRequests networkReq;
 
 public slots:
-    void refechTable_slot();
-    void do_repaint();
+    void refetchTableSlot();
     void on_showConfig_modal();
-    void hk_slot();
+    void huanKeSlot();
     void showStatus(QString str);
     void initAnimation();
-    // void do_pss();
-    // void do_pst();
-    // void do_tss();
-    // void do_tst();
-    int on_getWidth() {
+    int onGetWidth() {
         return width();
     };
 private slots:
@@ -141,16 +131,19 @@ private:
     void initSignal();
     void initUi();
     bool timerStart = false;
-    QHBoxLayout* class_show_widget_layout;
-    bool WindowHide = false;
-    int timer_id;
-    qint64 min_time=0;
-    qint64 sec_time=0;
+    QHBoxLayout* classShowWidgetLayout;
+    bool windowHidden = false;
+    int timerId;
+    qint64 minTime = 0;
+    qint64 secTime = 0;
     QTimer* topTimer;
-    int scr_w;
-    int scr_h;
-    bool isFinish = false;
-    
+    bool isFinished = false;
+
+    static constexpr int SIDEBAR_WIDTH = 154;
+    static constexpr int CLASS_BLOCK_SIZE = 49;
+    static constexpr int BLOCK_SPACING = 20;
+    static constexpr int DEFAULT_WINDOW_WIDTH = 531;
+    static constexpr int ANIM_OFFSET_Y = -78;
 };
 
 

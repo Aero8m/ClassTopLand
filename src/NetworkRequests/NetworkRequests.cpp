@@ -5,15 +5,15 @@
 #include "./NetworkRequests.h"
 NetworkRequests::NetworkRequests(RequestType type,QUrl url)
 {
-    req_type = type;
-    req_url = url;
+    reqType = type;
+    reqUrl = url;
 }
 void NetworkRequests::get(QUrl url)
 {
     QNetworkAccessManager *netManager = new QNetworkAccessManager(this);
     QNetworkRequest request;
     request.setUrl(url);
-    connect(netManager,&QNetworkAccessManager::finished,this,[=](QNetworkReply *reply)
+    connect(netManager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
     {
         showLog(QString("Status Code:%1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()),INFO);
         if (reply->error())
@@ -24,11 +24,11 @@ void NetworkRequests::get(QUrl url)
         {
             showLog(QString("Request ok, Reading..."),INFO);
             QByteArray data = reply->readAll();
-            reply_string = QString::fromUtf8(data);
+            replyString = QString::fromUtf8(data);
             readJson(data);
         }
     });
-    QNetworkReply* reply = netManager->get(request);
+    netManager->get(request);
 
 }
 void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonObject cookie,QString ua)
@@ -49,7 +49,7 @@ void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonOb
     }
     request.setRawHeader("User-Agent",ua.toUtf8());
     request.setUrl(url);
-    connect(naManager,&QNetworkAccessManager::finished,this,[=](QNetworkReply *reply)
+    connect(naManager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
     {
         if (reply->error())
         {
@@ -60,11 +60,11 @@ void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonOb
         {
             showLog(QString("Request %1 ok, Reading...").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
             QByteArray data = reply->readAll();
-            reply_string = QString::fromUtf8(data);
+            replyString = QString::fromUtf8(data);
             readJson(data);
         }
     });
-    QNetworkReply* reply = naManager->post(request,QJsonDocument(data).toJson());
+    naManager->post(request, QJsonDocument(data).toJson());
 }
 void NetworkRequests::readJson(QByteArray data)
 {
@@ -78,21 +78,25 @@ void NetworkRequests::readJson(QByteArray data)
         json = document.object();
     }
     isFinished = true;
-    emit finished(json,reply_string,errorString);
+    emit finished(json,replyString,errorString);
 }
 void NetworkRequests::start(QJsonObject data, QJsonObject headers, QJsonObject cookie, QString ua)
 {
-    if (req_type == RequestType::GET)
+    if (reqType == RequestType::GET)
     {
-        get(req_url);
+        get(reqUrl);
     }
-    else if (req_type == RequestType::POST)
+    else if (reqType == RequestType::POST)
     {
-        post(req_url,data,headers,cookie,ua);
+        post(reqUrl,data,headers,cookie,ua);
     }
 }
 void NetworkRequests::operator=(const NetworkRequests &other)
 {
-    req_type = other.req_type;
-    req_url = other.req_url;
+    json = other.json;
+    replyString = other.replyString;
+    reqType = other.reqType;
+    reqUrl = other.reqUrl;
+    errorString = other.errorString;
+    isFinished = other.isFinished;
 }

@@ -22,9 +22,9 @@ public:
 private:
 	Ui::ExportAPISettingsTabClass *ui;
 
-	NetworkRequests* apilist_req = nullptr;
-	NetworkRequests* exapitb_req = nullptr;
-	NetworkRequests* exapitk_req = nullptr;
+	NetworkRequests* apiListReq = nullptr;
+	NetworkRequests* exApiTableReq = nullptr;
+	NetworkRequests* exApiTokenReq = nullptr;
 private slots:
 	void SyncExAPITable();
 };

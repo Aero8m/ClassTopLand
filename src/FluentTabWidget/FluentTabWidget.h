@@ -22,7 +22,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     QSize tabSizeHint(int index) const override;
 private:
-    int m_hoverIndex = -1;
+    int hoverIndex = -1;
 };
 class FluentTabWidget : public QTabWidget
 {

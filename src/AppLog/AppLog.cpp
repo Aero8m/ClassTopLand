@@ -2,37 +2,37 @@
 
 
 
-void showLog(const char* LogText,LogStatus LogSt){
-    QString CurrentTime = QTime::currentTime().toString("hh:mm:ss.zzz");
-    if (LogSt == LogStatus::ALL){
-        std::cout << RESET << "[" << CurrentTime.toStdString() << "] " << LogText << RESET << std::endl;
-    }else if (LogSt == LogStatus::DEBUG){
-        std::cout << RESET << "[" << CurrentTime.toStdString() << "] DEBUG: " << LogText << RESET << std::endl;
-    }else if (LogSt == LogStatus::INFO){
-        std::cout << GREEN << "[" << CurrentTime.toStdString() << "] INFO: " << LogText << RESET << std::endl;
-    }else if (LogSt == LogStatus::WARN){
-        std::cout << YELLOW << "[" << CurrentTime.toStdString() << "] WARN: " << LogText << RESET << std::endl;
-    }else if (LogSt == LogStatus::ERR){
-        std::cout << RED << "[" << CurrentTime.toStdString() << "] ERR: " << LogText << RESET << std::endl;
-    }else if (LogSt == LogStatus::EXIT){
-        std::cout << YELLOW << "[" << CurrentTime.toStdString() << "] EXIT: " << LogText << RESET << std::endl;
+void showLog(const char* logText, LogStatus logStatus){
+    QString currentTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+    if (logStatus == LogStatus::ALL){
+        std::cout << RESET << "[" << currentTime.toStdString() << "] " << logText << RESET << std::endl;
+    }else if (logStatus == LogStatus::DEBUG){
+        std::cout << RESET << "[" << currentTime.toStdString() << "] DEBUG: " << logText << RESET << std::endl;
+    }else if (logStatus == LogStatus::INFO){
+        std::cout << GREEN << "[" << currentTime.toStdString() << "] INFO: " << logText << RESET << std::endl;
+    }else if (logStatus == LogStatus::WARN){
+        std::cout << YELLOW << "[" << currentTime.toStdString() << "] WARN: " << logText << RESET << std::endl;
+    }else if (logStatus == LogStatus::ERR){
+        std::cout << RED << "[" << currentTime.toStdString() << "] ERR: " << logText << RESET << std::endl;
+    }else if (logStatus == LogStatus::EXIT){
+        std::cout << YELLOW << "[" << currentTime.toStdString() << "] EXIT: " << logText << RESET << std::endl;
     }
 
 }
-void showLog(const QString LogText,LogStatus LogSt){
-    QString CurrentTime = QTime::currentTime().toString("hh:mm:ss.zzz");
-    if (LogSt == LogStatus::ALL){
-        std::cout << RESET << "[" << CurrentTime.toStdString() << "] " << LogText.toStdString().c_str() << RESET << std::endl;
-    }else if (LogSt == LogStatus::DEBUG){
-        std::cout << RESET << "[" << CurrentTime.toStdString() << "] DEBUG: " << LogText.toStdString().c_str()<< RESET << std::endl;
-    }else if (LogSt == LogStatus::INFO){
-        std::cout << GREEN << "[" << CurrentTime.toStdString() << "] INFO: " << LogText.toStdString().c_str() << RESET << std::endl;
-    }else if (LogSt == LogStatus::WARN){
-        std::cout << YELLOW << "[" << CurrentTime.toStdString() << "] WARN: " << LogText.toStdString().c_str() << RESET << std::endl;
-    }else if (LogSt == LogStatus::ERR){
-        std::cout << RED << "[" << CurrentTime.toStdString() << "] ERR: " << LogText.toStdString().c_str() << RESET << std::endl;
-    }else if (LogSt == LogStatus::EXIT){
-        std::cout << YELLOW << "[" << CurrentTime.toStdString() << "] EXIT: " << LogText.toStdString().c_str() << RESET << std::endl;
+void showLog(const QString logText, LogStatus logStatus){
+    QString currentTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+    if (logStatus == LogStatus::ALL){
+        std::cout << RESET << "[" << currentTime.toStdString() << "] " << logText.toStdString().c_str() << RESET << std::endl;
+    }else if (logStatus == LogStatus::DEBUG){
+        std::cout << RESET << "[" << currentTime.toStdString() << "] DEBUG: " << logText.toStdString().c_str()<< RESET << std::endl;
+    }else if (logStatus == LogStatus::INFO){
+        std::cout << GREEN << "[" << currentTime.toStdString() << "] INFO: " << logText.toStdString().c_str() << RESET << std::endl;
+    }else if (logStatus == LogStatus::WARN){
+        std::cout << YELLOW << "[" << currentTime.toStdString() << "] WARN: " << logText.toStdString().c_str() << RESET << std::endl;
+    }else if (logStatus == LogStatus::ERR){
+        std::cout << RED << "[" << currentTime.toStdString() << "] ERR: " << logText.toStdString().c_str() << RESET << std::endl;
+    }else if (logStatus == LogStatus::EXIT){
+        std::cout << YELLOW << "[" << currentTime.toStdString() << "] EXIT: " << logText.toStdString().c_str() << RESET << std::endl;
     }
 
 }

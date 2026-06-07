@@ -25,13 +25,13 @@ FluentTabBar::FluentTabBar(QWidget *parent)
 
 void FluentTabBar::enterEvent(QEnterEvent *event)
 {
-    m_hoverIndex = -1;
+    hoverIndex = -1;
     QTabBar::enterEvent(event);
 }
 
 void FluentTabBar::leaveEvent(QEvent *event)
 {
-    m_hoverIndex = -1;
+    hoverIndex = -1;
     update();
     QTabBar::leaveEvent(event);
 }
@@ -39,8 +39,8 @@ void FluentTabBar::leaveEvent(QEvent *event)
 void FluentTabBar::mouseMoveEvent(QMouseEvent *event)
 {
     int index = tabAt(event->pos());
-    if (index != m_hoverIndex) {
-        m_hoverIndex = index;
+    if (index != hoverIndex) {
+        hoverIndex = index;
         update();
     }
     QTabBar::mouseMoveEvent(event);
@@ -58,7 +58,7 @@ void FluentTabBar::paintEvent(QPaintEvent *event)
         QRect rect = tabRect(i);
         QString text = tabText(i);
         bool selected = (i == currentIndex());
-        bool hover = (m_hoverIndex == i);
+        bool hover = (hoverIndex == i);
 
         // 绘制背景
         if (selected) {

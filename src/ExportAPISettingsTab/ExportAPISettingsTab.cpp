@@ -16,13 +16,13 @@ ExportAPISettingsTab::~ExportAPISettingsTab()
 
 void ExportAPISettingsTab::initAPIList() {
 	ui->APIList->clear();
-	if (apilist_req) {
-		delete apilist_req;
+	if (apiListReq) {
+		delete apiListReq;
 	}
-	apilist_req = new NetworkRequests(GET,CloudAPIUrl::GET_EXAPI_LIST);
-	apilist_req->start();
-	connect(apilist_req, &NetworkRequests::finished, this, [=](QJsonObject json, QString reply_string, QString error_string) {
-		if (!error_string.isEmpty())
+	apiListReq = new NetworkRequests(GET,CloudAPIUrl::GET_EXAPI_LIST);
+	apiListReq->start();
+	connect(apiListReq, &NetworkRequests::finished, this, [=](QJsonObject json, QString replyString, QString errorString) {
+		if (!errorString.isEmpty())
 		{
 			QMessageBox::critical(this, "错误", "请求失败！");
 			return;
@@ -46,39 +46,39 @@ void ExportAPISettingsTab::SyncExAPITable() {
 		return;
 	}
 		
-	QString apiname = ui->APIList->currentText();
-	QString apiid = ui->APIList->currentData().toString();
-    if (exapitk_req) {
-        delete exapitk_req;
+	QString apiName = ui->APIList->currentText();
+	QString apiId = ui->APIList->currentData().toString();
+    if (exApiTokenReq) {
+        delete exApiTokenReq;
     }
-    exapitk_req = new NetworkRequests(POST,MAKE_EXAPI_URL(apiid,"get_token"));
-    exapitk_req->start(QJsonObject{
+    exApiTokenReq = new NetworkRequests(POST,MAKE_EXAPI_URL(apiId,"get_token"));
+    exApiTokenReq->start(QJsonObject{
         {"username",ui->APIUser->text()},
         {"password",ui->APIPwd->text()}
     });
-    connect(exapitk_req, &NetworkRequests::finished, this, [=](QJsonObject json, QString reply_string, QString error_string) { 
-        if (!error_string.isEmpty())
+    connect(exApiTokenReq, &NetworkRequests::finished, this, [=](QJsonObject json, QString replyString, QString errorString) { 
+        if (!errorString.isEmpty())
         {
             QMessageBox::critical(this, "错误", "请求失败！");
             return;
         }
 		QString token = json["token"].toString();
-		if (exapitb_req) {
-		    delete exapitb_req;
+		if (exApiTableReq) {
+		    delete exApiTableReq;
 		}
-		exapitb_req = new NetworkRequests(POST,MAKE_EXAPI_URL(apiid,"get_classtable"));
-        exapitb_req->start(QJsonObject{
+		exApiTableReq = new NetworkRequests(POST,MAKE_EXAPI_URL(apiId,"get_classtable"));
+        exApiTableReq->start(QJsonObject{
             {"token",token}
         });
-		connect(exapitb_req, &NetworkRequests::finished, this, [=](QJsonObject json, QString reply_string, QString error_string) {
-			if (!error_string.isEmpty())
+		connect(exApiTableReq, &NetworkRequests::finished, this, [=](QJsonObject json, QString replyString, QString errorString) {
+			if (!errorString.isEmpty())
 			{
 				QMessageBox::critical(this, "错误", "请求失败！");
 				return;
 			}
 			QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
 			if (file.open(QIODevice::WriteOnly)) {
-				file.write(reply_string.toUtf8());
+				file.write(replyString.toUtf8());
 				file.close();
 				QMessageBox::information(this, "提示", "同步成功！重启后生效！");
 			}

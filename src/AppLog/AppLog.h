@@ -27,5 +27,5 @@ enum LogStatus{
     ERR,
     EXIT
 };
-void showLog(const char* LogText,LogStatus LogSt = LogStatus::ALL);
-void showLog(const QString LogText,LogStatus LogSt = LogStatus::ALL);
+void showLog(const char* logText, LogStatus logStatus = LogStatus::ALL);
+void showLog(const QString logText, LogStatus logStatus = LogStatus::ALL);

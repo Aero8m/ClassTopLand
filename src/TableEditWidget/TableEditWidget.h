@@ -11,7 +11,6 @@
 #include<QTableWidgetItem>
 #include<QtGlobal>
 #include<QMessageBox>
-#include<QTranslator>
 #include <qdesktopservices.h>
 #include<QListWidgetItem>
 //拖拽事件
@@ -33,6 +32,7 @@
 #include<QProcess>
 #include "../NetworkRequests/NetworkRequests.h"
 #include "../AppendixTableManager/AppendixTableManager.h"
+#include "../Utils/Utils.h"
 #include "../VERSION.h"
 namespace Ui {
 class TableEditWidget;
@@ -50,7 +50,7 @@ public:
 private:
     void showEvent(QShowEvent* event) override;
     void readTableJson();
-    void refechTableWidget(QJsonArray today_table);
+    void refechTableWidget(QJsonArray todayTable);
     
     void closeEvent(QCloseEvent* event) override;
     void addItem(QString key);
@@ -76,20 +76,21 @@ private slots:
 
     void on_show_AppendixTableManager();
     void on_timerInfo_changed();
-    void on_editAppendixTable(QString table_name);
+    void on_editAppendixTable(QString tableName);
+    void saveBoolConfig(const QString &key, bool value);
     void _startUpdateTool();
     void on_cellChanged(int row,int column);
 signals:
-    void refechTable_signal();
-    void refechToolBar_signal();
+    void refetchTableSignal();
+    void refetchToolBarSignal();
 
 private:
-    bool m_bIsEditAppendixTable = false;
-    QString m_sCurrentEditAppendixTableName;
-    QJsonObject m_joConfig;
-    QJsonObject m_joTimeTable;
-    int m_iClickcnt = 0;
-    NetworkRequests m_rWeatherSearchReq;
+    bool isEditAppendixTable = false;
+    QString currentEditAppendixTableName;
+    QJsonObject configJson;
+    QJsonObject timeTableJson;
+    int clickCount = 0;
+    NetworkRequests weatherSearchReq;
 
 private:
     Ui::TableEditWidget* ui;

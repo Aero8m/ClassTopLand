@@ -13,11 +13,11 @@ public:
     virtual void mouseClickEvent(QMouseEvent* e);
     virtual void mouseDoubleClickEvent(QMouseEvent* e);
     virtual bool event(QEvent *e);
-    QPropertyAnimation* resize_animation;
-    bool anisettinged = false;
-    bool aniopen = false;
-    void setAniOpen(bool status){
-        aniopen = status;
+    QPropertyAnimation* resizeAnimation;
+    bool animationConfigured = false;
+    bool animationEnabled = false;
+    void setAnimationEnabled(bool status){
+        animationEnabled = status;
     }
 signals:
     void clicked();

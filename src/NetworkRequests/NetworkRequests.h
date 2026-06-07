@@ -18,9 +18,9 @@ class NetworkRequests : public QObject{
     public:
     NetworkRequests(RequestType type=GET,QUrl url=QUrl());
     QJsonObject json;
-    QString reply_string;
-    RequestType req_type;
-    QUrl req_url;
+    QString replyString;
+    RequestType reqType;
+    QUrl reqUrl;
     QString errorString;
     bool isFinished = false;
     bool hasError()
@@ -34,7 +34,7 @@ class NetworkRequests : public QObject{
     void post(QUrl url,QJsonObject data,QJsonObject headers=QJsonObject(),QJsonObject cookie = QJsonObject(),QString ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0");
     void readJson(QByteArray data);
     signals:
-    void finished(QJsonObject json,QString reply_string,QString error_string);
+    void finished(QJsonObject json, QString replyString, QString errorString);
 };
 
 

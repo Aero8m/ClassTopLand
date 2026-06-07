@@ -9,9 +9,13 @@
 #include<QFile>
 #include<QTextStream>
 #include<QWidget>
-QString getStyleSheet(QString filen);
-void loadStyleSheet(QWidget* widget,QString filen);
+#include<QJsonObject>
+#include<QJsonDocument>
+#include<QJsonParseError>
+#include <optional>
 
-
+QString getStyleSheet(QString fileName);
+void loadStyleSheet(QWidget* widget, QString fileName);
+std::optional<QJsonObject> readJsonFile(const QString &filePath);
 
 #endif //UTILS_H

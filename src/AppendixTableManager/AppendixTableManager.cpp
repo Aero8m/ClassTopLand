@@ -26,20 +26,9 @@ void AppendixTableManager::initSignal() {
 }
 void AppendixTableManager::readAppendixTables() {
     ui->list_appendTable->clear();
-    QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
-    file.open(QIODevice::ReadWrite | QIODevice::Text);
-
-
-    QTextStream stream(&file);
-    QString file_str = stream.readAll();
-    file.close();
-    QJsonParseError jsonError;
-    QJsonDocument jsondoc = QJsonDocument::fromJson(file_str.toUtf8(),&jsonError);
-    if (jsonError.error != QJsonParseError::NoError && !jsondoc.isNull()) {
-        showLog("Config.json is Error!",LogStatus::ERR);
-        return;
-    }
-    appendixTables = jsondoc.object()["appendixTables"].toObject();
+    auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    if (!result) return;
+    appendixTables = (*result)["appendixTables"].toObject();
     for (QJsonObject::iterator iter = appendixTables.begin(); iter != appendixTables.end(); iter++){
         ui->list_appendTable->addItem(iter.key());
     }
@@ -75,8 +64,8 @@ void AppendixTableManager::addAppendTables() {
             }
         }
         if (!hasInput){
-            QJsonArray nulljsonarray;
-            appendixTables[dialog.textValue()] = nulljsonarray;
+            QJsonArray nullJsonArray;
+            appendixTables[dialog.textValue()] = nullJsonArray;
             writeAppendixTables();
             readAppendixTables();
         }
@@ -92,30 +81,20 @@ void AppendixTableManager::deleteAppendTables(QListWidgetItem *item) {
 }
 
 void AppendixTableManager::writeAppendixTables() {
-    QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
-    qDebug () << file.open(QIODevice::ReadOnly | QIODevice::Text);
-
-    QTextStream stream(&file);
-    QString file_str = stream.readAll();
-    file.close();
-    QJsonParseError jsonError;
-    QJsonDocument jsondoc = QJsonDocument::fromJson(file_str.toUtf8(),&jsonError);
-    if (jsonError.error != QJsonParseError::NoError && !jsondoc.isNull()) {
-        showLog("Config.json is Error!",LogStatus::ERR);
-        return;
-    }
-    QJsonObject all_tables = jsondoc.object();
-    all_tables["appendixTables"] = appendixTables;
-    QFile file_2(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
-    file_2.open(QIODevice::Truncate | QIODevice::WriteOnly);
-    QJsonDocument write_doc;
-    write_doc.setObject(all_tables);
-    file_2.write(write_doc.toJson());
-    file_2.close();
+    auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    if (!result) return;
+    QJsonObject allTables = *result;
+    allTables["appendixTables"] = appendixTables;
+    QFile outFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    outFile.open(QIODevice::Truncate | QIODevice::WriteOnly);
+    QJsonDocument writeDoc;
+    writeDoc.setObject(allTables);
+    outFile.write(writeDoc.toJson());
+    outFile.close();
 }
 
 void AppendixTableManager::editAppendTables() {
-    QString edit_table_name = ui->list_appendTable->currentItem()->text();
-    emit editAppendixTable(edit_table_name);
+    QString editTableName = ui->list_appendTable->currentItem()->text();
+    emit editAppendixTable(editTableName);
     close();
 }

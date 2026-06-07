@@ -7,14 +7,14 @@ TableEditWidget::TableEditWidget(QWidget *parent)
     , ui(new Ui::TableEditWidget)
 {
     ui->setupUi(this);
-    connect(ui->radioButton,SIGNAL(toggled(bool)),this,SLOT(toggleded()));
-    connect(ui->radioButton_2,SIGNAL(toggled(bool)),this,SLOT(toggleded()));
-    connect(ui->radioButton_3,SIGNAL(toggled(bool)),this,SLOT(toggleded()));
-    connect(ui->radioButton_4,SIGNAL(toggled(bool)),this,SLOT(toggleded()));
-    connect(ui->radioButton_5,SIGNAL(toggled(bool)),this,SLOT(toggleded()));
-    connect(ui->label,&ClickLabel::clicked,this,[=]{
-        if (m_iClickcnt >=10){
-            m_iClickcnt=0;
+    connect(ui->radioButton,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
+    connect(ui->radioButton_2,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
+    connect(ui->radioButton_3,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
+    connect(ui->radioButton_4,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
+    connect(ui->radioButton_5,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
+    connect(ui->label,&ClickLabel::clicked,this,[=, this]{
+        if (clickCount >=10){
+            clickCount=0;
             QInputDialog dialog{this, Qt::WindowCloseButtonHint};
             dialog.setWindowTitle(tr("调试码"));
             dialog.setInputMode(QInputDialog::InputMode::TextInput);
@@ -31,9 +31,9 @@ TableEditWidget::TableEditWidget(QWidget *parent)
                 QCryptographicHash hash(QCryptographicHash::Sha256);
                 hash.addData(bytearray);
                 QByteArray hasharray = hash.result();
-                QString hash_value = hasharray.toHex();
-                qDebug() << hash_value;
-                if (hash_value == "a8c97315e9aa9eed727ae5aa9515e2a27d4df30cc68c4a210fa7b2d3c4e3ea20") {
+                QString hashValue = hasharray.toHex();
+                qDebug() << hashValue;
+                if (hashValue == "a8c97315e9aa9eed727ae5aa9515e2a27d4df30cc68c4a210fa7b2d3c4e3ea20") {
                     QDesktopServices::openUrl(QUrl("https://www.bilibili.com/video/BV1wv411Y7YN"));
                 }else{
                    QMessageBox::critical(this,"错误","调试码错误！");
@@ -41,7 +41,7 @@ TableEditWidget::TableEditWidget(QWidget *parent)
             }
 
         }else{
-            m_iClickcnt++;
+            clickCount++;
         }
     });
     readTableJson();
@@ -53,18 +53,6 @@ TableEditWidget::TableEditWidget(QWidget *parent)
         });
     connect(ui->save_text_config,&QPushButton::clicked,this,&TableEditWidget::on_timerInfo_changed);
     connect(ui->start_table_manager,&QPushButton::clicked,this,&TableEditWidget::on_show_AppendixTableManager);
-    QTranslator translator;
-    QLocale::Language lab = QLocale::system().language();
-    if(QLocale::Chinese == lab)
-    {
-        translator.load(":/lang/lang_cn.qm");
-        qApp->installTranslator(&translator);
-        ui->retranslateUi(this);
-    }else if(QLocale::English== lab){
-        translator.load(":/language/lang_en.qm");
-        qApp->installTranslator(&translator);
-        ui->retranslateUi(this);
-    }
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     this->installEventFilter(this);
     ui->label_4->setText("Build " + QString(APP_VERSION));
@@ -88,7 +76,7 @@ void TableEditWidget::showEvent(QShowEvent* event){
 }
 void TableEditWidget::closeEvent(QCloseEvent *event){
     QApplication::setQuitOnLastWindowClosed(false);
-    emit refechTable_signal();
+    emit refetchTableSignal();
     this->hide();
     event->ignore();
 }
@@ -100,148 +88,135 @@ void TableEditWidget::on_show_AppendixTableManager() {
     atm->show();
 }
 
-void TableEditWidget::on_editAppendixTable(QString table_name) {
+void TableEditWidget::on_editAppendixTable(QString tableName) {
     ui->radioButton_6->setChecked(true);
-    m_bIsEditAppendixTable = true;
-    m_sCurrentEditAppendixTableName = table_name;
-    refechTableWidget(m_joTimeTable["appendixTables"].toObject()[table_name].toArray());
+    isEditAppendixTable = true;
+    currentEditAppendixTableName = tableName;
+    refechTableWidget(timeTableJson["appendixTables"].toObject()[tableName].toArray());
 }
 
 void TableEditWidget::setConfig(QJsonObject obj){
-    m_joConfig=obj;
-    ui->timer_hide->setChecked(m_joConfig.value("disable_timer").toBool());
-    ui->timer_time->setDateTime(QDateTime::fromString(m_joConfig["end_time"].toString(),"yyyy-MM-dd hh:mm:ss"));
-    ui->edit_name->setText(m_joConfig["label_tag"].toString());
-    ui->edit_name_eng->setText(m_joConfig["english_tag"].toString());
+    configJson=obj;
+    ui->timer_hide->setChecked(configJson.value("disable_timer").toBool());
+    ui->timer_time->setDateTime(QDateTime::fromString(configJson["endTime"].toString(),"yyyy-MM-dd hh:mm:ss"));
+    ui->edit_name->setText(configJson["label_tag"].toString());
+    ui->edit_name_eng->setText(configJson["english_tag"].toString());
 }
 void TableEditWidget::on_timerInfo_changed(){
-    m_joConfig["end_time"] = ui->timer_time->dateTime().toString("yyyy-MM-dd hh:mm:ss");
-    m_joConfig["label_tag"] = ui->edit_name->text();
-    m_joConfig["english"] = QString("There are () $\nleft until %1").arg(ui->edit_name_eng->text());
-    m_joConfig["english_end"] = QString("There is not a $\nleft until %1").arg(ui->edit_name_eng->text());
-    m_joConfig["english_tag"] = ui->edit_name_eng->text();
-    m_joConfig["disable_timer"] = ui->timer_hide->isChecked();
-    QFile config_file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    config_file.open(QFile::WriteOnly);
-    QJsonDocument temp_doc;
-    temp_doc.setObject(m_joConfig);
-    config_file.write(temp_doc.toJson(QJsonDocument::Indented));
-    config_file.close();
+    configJson["endTime"] = ui->timer_time->dateTime().toString("yyyy-MM-dd hh:mm:ss");
+    configJson["label_tag"] = ui->edit_name->text();
+    configJson["english"] = QString("There are () $\nleft until %1").arg(ui->edit_name_eng->text());
+    configJson["english_end"] = QString("There is not a $\nleft until %1").arg(ui->edit_name_eng->text());
+    configJson["english_tag"] = ui->edit_name_eng->text();
+    configJson["disable_timer"] = ui->timer_hide->isChecked();
+    QFile configFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
+    configFile.open(QFile::WriteOnly);
+    QJsonDocument tempDoc;
+    tempDoc.setObject(configJson);
+    configFile.write(tempDoc.toJson(QJsonDocument::Indented));
+    configFile.close();
     QMessageBox::information(this,tr("提示"),tr("重启生效"));
 }
 
 void TableEditWidget::readTableJson(){
-    QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
-    file.open(QIODevice::ReadWrite | QIODevice::Text);
-
-
-    QTextStream stream(&file);
-    QString file_str = stream.readAll();
-    file.close();
-    QJsonParseError jsonError;
-    QJsonDocument jsondoc = QJsonDocument::fromJson(file_str.toUtf8(),&jsonError);
-    if (jsonError.error != QJsonParseError::NoError && !jsondoc.isNull()) {
-        showLog("table.json is Error!",LogStatus::ERR);
-        return;
-    }
-    m_joTimeTable = jsondoc.object();
-
-
+    auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    if (!result) return;
+    timeTableJson = *result;
 }
-void TableEditWidget::refechTableWidget(QJsonArray today_table){
+void TableEditWidget::refechTableWidget(QJsonArray todayTable){
 
     ui->tableWidget->clear();
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "课程" << "上课时间" << "下课时间" << "课间时间");
-    ui->tableWidget->setRowCount(today_table.count());
-    for (int x = 0; x<today_table.count();x++){
-        QJsonObject value_object = today_table.at(x).toObject();
-        QString name = value_object.value("name").toString();
-        QString start_time = value_object.value("start").toString();
-        QString end_time = value_object.value("end").toString();
-        int split_time = value_object.value("split").toInt();
+    ui->tableWidget->setRowCount(todayTable.count());
+    for (int x = 0; x<todayTable.count();x++){
+        QJsonObject valueObject = todayTable.at(x).toObject();
+        QString name = valueObject.value("name").toString();
+        QString startTime = valueObject.value("start").toString();
+        QString endTime = valueObject.value("end").toString();
+        int splitTime = valueObject.value("split").toInt();
         ui->tableWidget->setItem(x,0,new QTableWidgetItem(name));
-        ui->tableWidget->setItem(x,1,new QTableWidgetItem(start_time));
-        ui->tableWidget->setItem(x,2,new QTableWidgetItem(end_time));
-        ui->tableWidget->setItem(x,3,new QTableWidgetItem(QString::number(split_time)));
+        ui->tableWidget->setItem(x,1,new QTableWidgetItem(startTime));
+        ui->tableWidget->setItem(x,2,new QTableWidgetItem(endTime));
+        ui->tableWidget->setItem(x,3,new QTableWidgetItem(QString::number(splitTime)));
     }
 }
 void TableEditWidget::toggleded(){
 
     if (ui->radioButton->isChecked()){
-        m_bIsEditAppendixTable = false;
-        refechTableWidget(m_joTimeTable.value("Mon").toArray());
+        isEditAppendixTable = false;
+        refechTableWidget(timeTableJson.value("Mon").toArray());
     }else
     if (ui->radioButton_2->isChecked()){
-        m_bIsEditAppendixTable = false;
-        refechTableWidget(m_joTimeTable.value("Tue").toArray());
+        isEditAppendixTable = false;
+        refechTableWidget(timeTableJson.value("Tue").toArray());
     }else
     if (ui->radioButton_3->isChecked()){
-        m_bIsEditAppendixTable = false;
-        refechTableWidget(m_joTimeTable.value("Wed").toArray());
+        isEditAppendixTable = false;
+        refechTableWidget(timeTableJson.value("Wed").toArray());
     }else
     if (ui->radioButton_4->isChecked()){
-        m_bIsEditAppendixTable = false;
-        refechTableWidget(m_joTimeTable.value("Thu").toArray());
+        isEditAppendixTable = false;
+        refechTableWidget(timeTableJson.value("Thu").toArray());
     }else
     if (ui->radioButton_5->isChecked()){
-        m_bIsEditAppendixTable = false;
-        refechTableWidget(m_joTimeTable.value("Fri").toArray());
+        isEditAppendixTable = false;
+        refechTableWidget(timeTableJson.value("Fri").toArray());
     }
 }
 void TableEditWidget::addItem(QString key){
-    QJsonObject insert_json;
-    insert_json.insert("name",ui->lineEdit->text());
-    insert_json.insert("start",ui->timeEdit->text());
-    insert_json.insert("end",ui->timeEdit_2->text());
-    QJsonArray editarray;
-    if (m_bIsEditAppendixTable){
-        editarray = m_joTimeTable["appendixTables"][key].toArray();
+    QJsonObject insertJson;
+    insertJson.insert("name",ui->lineEdit->text());
+    insertJson.insert("start",ui->timeEdit->text());
+    insertJson.insert("end",ui->timeEdit_2->text());
+    QJsonArray editArray;
+    if (isEditAppendixTable){
+        editArray = timeTableJson["appendixTables"][key].toArray();
     }else{
-        editarray = m_joTimeTable[key].toArray();
+        editArray = timeTableJson[key].toArray();
     }
-    editarray.append(insert_json);
+    editArray.append(insertJson);
 
-    // for (int x = 0;x<editarray.count()-1;x++){
-    //     for (int y = x+1;y<editarray.count();y++){
-    //         if (QTime::fromString(editarray[y].toObject().value("start").toString()) < QTime::fromString(editarray[x].toObject().value("start").toString())){
+    // for (int x = 0;x<editArray.count()-1;x++){
+    //     for (int y = x+1;y<editArray.count();y++){
+    //         if (QTime::fromString(editArray[y].toObject().value("start").toString()) < QTime::fromString(editArray[x].toObject().value("start").toString())){
     //             min_index = y;
     //         }
     //     }
-    //     QJsonObject max_Object = editarray[x].toObject();
-    //     editarray[x] = editarray[min_index];
-    //     editarray[min_index] = max_Object;
+    //     QJsonObject max_Object = editArray[x].toObject();
+    //     editArray[x] = editArray[min_index];
+    //     editArray[min_index] = max_Object;
     // }
 
-    for (int i = 0; i < editarray.count() - 1; i++) {	// 操作i至len-1个数据（剩下最后一个不需要操作）
+    for (int i = 0; i < editArray.count() - 1; i++) {	// 操作i至len-1个数据（剩下最后一个不需要操作）
         int index = i;	// 赋初值给索引
-        for (int j = i + 1; j < editarray.count(); j++) {	// 比较剩余未排序的数据
-            if (getTodayTime(editarray[j].toObject().value("start").toString()) < getTodayTime(editarray[index].toObject().value("start").toString())) {	// 当剩余的数据有比索引对应的数小时，更新索引
+        for (int j = i + 1; j < editArray.count(); j++) {	// 比较剩余未排序的数据
+            if (getTodayTime(editArray[j].toObject().value("start").toString()) < getTodayTime(editArray[index].toObject().value("start").toString())) {	// 当剩余的数据有比索引对应的数小时，更新索引
                 index = j;
             }
         }
         // 当索引不等于初值时
         if (index != i) {
             // 交换数据
-            QJsonObject temp = editarray[index].toObject();
-            editarray[index] = editarray[i];
-            editarray[i] = temp;
+            QJsonObject temp = editArray[index].toObject();
+            editArray[index] = editArray[i];
+            editArray[i] = temp;
         }
     }
-    if (m_bIsEditAppendixTable){
-        QJsonObject bfatable = m_joTimeTable["appendixTables"].toObject();
-        bfatable[key] = editarray;
-        m_joTimeTable["appendixTables"] = bfatable;
+    if (isEditAppendixTable){
+        QJsonObject appendixTablesObj = timeTableJson["appendixTables"].toObject();
+        appendixTablesObj[key] = editArray;
+        timeTableJson["appendixTables"] = appendixTablesObj;
     }else{
-        m_joTimeTable[key] = editarray;
+        timeTableJson[key] = editArray;
     }
-    QFile config_file(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
-    config_file.open(QFile::WriteOnly);
-    QJsonDocument temp_doc;
-    temp_doc.setObject(m_joTimeTable);
-    config_file.write(temp_doc.toJson(QJsonDocument::Indented));
-    config_file.close();
-    if (m_bIsEditAppendixTable){
-        refechTableWidget(m_joTimeTable["appendixTables"].toObject()[m_sCurrentEditAppendixTableName].toArray());
+    QFile configFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    configFile.open(QFile::WriteOnly);
+    QJsonDocument tempDoc;
+    tempDoc.setObject(timeTableJson);
+    configFile.write(tempDoc.toJson(QJsonDocument::Indented));
+    configFile.close();
+    if (isEditAppendixTable){
+        refechTableWidget(timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray());
     }else{
         toggleded();
     }
@@ -267,7 +242,7 @@ void TableEditWidget::on_pushButton_clicked()
     if (ui->radioButton_5->isChecked()){
         addItem("Fri");
     }else if(ui->radioButton_6->isChecked()){
-        addItem(m_sCurrentEditAppendixTableName);
+        addItem(currentEditAppendixTableName);
     }
 }
 
@@ -276,43 +251,33 @@ void TableEditWidget::on_pushButton_clicked()
 
 
 
+void TableEditWidget::saveBoolConfig(const QString &key, bool value)
+{
+    configJson[key] = value;
+    QFile configFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
+    configFile.open(QFile::WriteOnly);
+    QJsonDocument tempDoc;
+    tempDoc.setObject(configJson);
+    configFile.write(tempDoc.toJson(QJsonDocument::Indented));
+    configFile.close();
+    QMessageBox::information(this, tr("提示"), tr("重启生效"));
+}
+
 void TableEditWidget::on_checkBox_2_clicked(bool checked)
 {
-    m_joConfig["zuan_status"] = checked;
-    QFile config_file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    config_file.open(QFile::WriteOnly);
-    QJsonDocument temp_doc;
-    temp_doc.setObject(m_joConfig);
-    config_file.write(temp_doc.toJson(QJsonDocument::Indented));
-    config_file.close();
-    QMessageBox::information(this,tr("提示"),tr("重启生效"));
-
+    saveBoolConfig("zuan_status", checked);
 }
 
 
 void TableEditWidget::on_checkBox_clicked(bool checked)
 {
-    m_joConfig["muyu_status"] = checked;
-    QFile config_file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    config_file.open(QFile::WriteOnly);
-    QJsonDocument temp_doc;
-    temp_doc.setObject(m_joConfig);
-    config_file.write(temp_doc.toJson(QJsonDocument::Indented));
-    config_file.close();
-    QMessageBox::information(this,tr("提示"),tr("重启生效"));
+    saveBoolConfig("muyu_status", checked);
 }
 
 
 void TableEditWidget::on_chkHide_clicked(bool checked)
 {
-    m_joConfig["toolbox_status"] = checked;
-    QFile config_file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    config_file.open(QFile::WriteOnly);
-    QJsonDocument temp_doc;
-    temp_doc.setObject(m_joConfig);
-    config_file.write(temp_doc.toJson(QJsonDocument::Indented));
-    config_file.close();
-    QMessageBox::information(this,tr("提示"),tr("重启生效"));
+    saveBoolConfig("toolbox_status", checked);
 }
 
 void TableEditWidget::_startUpdateTool() {
@@ -322,74 +287,74 @@ void TableEditWidget::_startUpdateTool() {
 }
 void TableEditWidget::on_cellChanged(int row, int column) {
     ui->tableWidget->blockSignals(true);
-    QJsonArray current_table;
-    QString current_table_name;
+    QJsonArray currentTable;
+    QString currentTableName;
     if (ui->radioButton->isChecked()) {
-        current_table = m_joTimeTable["Mon"].toArray();
-        current_table_name = "Mon";
+        currentTable = timeTableJson["Mon"].toArray();
+        currentTableName = "Mon";
     }
     else if (ui->radioButton_2->isChecked()) {
-        current_table = m_joTimeTable["Tue"].toArray();
-        current_table_name = "Tue";
+        currentTable = timeTableJson["Tue"].toArray();
+        currentTableName = "Tue";
     }
     else if (ui->radioButton_3->isChecked()) {
-        current_table = m_joTimeTable["Wed"].toArray();
-        current_table_name = "Wed";
+        currentTable = timeTableJson["Wed"].toArray();
+        currentTableName = "Wed";
     }
     else if (ui->radioButton_4->isChecked()) {
-        current_table = m_joTimeTable["Thu"].toArray();
-        current_table_name = "Thu";
+        currentTable = timeTableJson["Thu"].toArray();
+        currentTableName = "Thu";
     }
     else if (ui->radioButton_5->isChecked()) {
-        current_table = m_joTimeTable["Fri"].toArray();
-        current_table_name = "Fri";
+        currentTable = timeTableJson["Fri"].toArray();
+        currentTableName = "Fri";
     }
     else if (ui->radioButton_6->isChecked()) {
-        current_table = m_joTimeTable["appendixTables"].toObject()[m_sCurrentEditAppendixTableName].toArray();
-        current_table_name =  m_sCurrentEditAppendixTableName;
+        currentTable = timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray();
+        currentTableName =  currentEditAppendixTableName;
     }
     switch (column) {
         case 0: {
-            QJsonObject current_class = current_table[row].toObject();
-            current_class["name"] = ui->tableWidget->item(row, column)->text();
-            current_table[row] = current_class;
+            QJsonObject currentClass = currentTable[row].toObject();
+            currentClass["name"] = ui->tableWidget->item(row, column)->text();
+            currentTable[row] = currentClass;
             break;
         }
         case 1: {
-            QJsonObject current_class = current_table[row].toObject();
-            current_class["start"] = ui->tableWidget->item(row, column)->text();
-            current_table[row] = current_class;
+            QJsonObject currentClass = currentTable[row].toObject();
+            currentClass["start"] = ui->tableWidget->item(row, column)->text();
+            currentTable[row] = currentClass;
             break;
         }
         case 2: {
-            QJsonObject current_class = current_table[row].toObject();
-            current_class["end"] = ui->tableWidget->item(row, column)->text();
-            current_table[row] = current_class;
+            QJsonObject currentClass = currentTable[row].toObject();
+            currentClass["end"] = ui->tableWidget->item(row, column)->text();
+            currentTable[row] = currentClass;
             break;
         }
         case 3: {
-            QJsonObject current_class = current_table[row].toObject();
-            current_class["split"] = ui->tableWidget->item(row, column)->text();
-            current_table[row] = current_class;
+            QJsonObject currentClass = currentTable[row].toObject();
+            currentClass["split"] = ui->tableWidget->item(row, column)->text();
+            currentTable[row] = currentClass;
             break;
         }
     }
-    if (!m_bIsEditAppendixTable) {
-        m_joTimeTable[current_table_name] = current_table;
+    if (!isEditAppendixTable) {
+        timeTableJson[currentTableName] = currentTable;
     }
     else {
-        QJsonObject appendix_tables = m_joTimeTable["appendixTables"].toObject();
-        appendix_tables[current_table_name] = current_table;
-        m_joTimeTable["appendixTables"] = appendix_tables;
+        QJsonObject appendixTables = timeTableJson["appendixTables"].toObject();
+        appendixTables[currentTableName] = currentTable;
+        timeTableJson["appendixTables"] = appendixTables;
     }
-    QFile config_file(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
-    config_file.open(QFile::WriteOnly);
-    QJsonDocument temp_doc;
-    temp_doc.setObject(m_joTimeTable);
-    config_file.write(temp_doc.toJson(QJsonDocument::Indented));
-    config_file.close();
-    if (m_bIsEditAppendixTable) {
-        refechTableWidget(m_joTimeTable["appendixTables"].toObject()[m_sCurrentEditAppendixTableName].toArray());
+    QFile configFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    configFile.open(QFile::WriteOnly);
+    QJsonDocument tempDoc;
+    tempDoc.setObject(timeTableJson);
+    configFile.write(tempDoc.toJson(QJsonDocument::Indented));
+    configFile.close();
+    if (isEditAppendixTable) {
+        refechTableWidget(timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray());
     }
     else {
         toggleded();

@@ -16,23 +16,13 @@
 #include"./src/AppLog/AppLog.h"
 #include"./src/NetworkRequests/NetworkRequests.h"
 #include "./src/Utils/Utils.h"
-bool TimerisOpen(){
-    QFile file(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    file.open(QIODevice::ReadWrite | QIODevice::Text);
+bool timerIsOpen(){
+    auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
+    if (!result) return true;
 
-    QTextStream stream(&file);
-    QString file_str = stream.readAll();
-    file.close();
-    QJsonParseError jsonError;
-    QJsonDocument jsondoc = QJsonDocument::fromJson(file_str.toUtf8(),&jsonError);
-    if (jsonError.error != QJsonParseError::NoError && !jsondoc.isNull()) {
-        showLog("Config.json is Error!",LogStatus::ERR);
-        return true;
-    }
-    QJsonObject Config = jsondoc.object();
-    if (Config.contains("disable_timer")){
-
-        if (Config["disable_timer"].toBool()){
+    QJsonObject config = *result;
+    if (config.contains("disable_timer")){
+        if (config["disable_timer"].toBool()){
             showLog("Timer is Not Show",LogStatus::INFO);
             return false;
         }else{
@@ -48,12 +38,12 @@ void printLogo() {
     file.open(QIODevice::ReadOnly | QIODevice::Text);
 
     QTextStream stream(&file);
-    QString file_str = stream.readAll();
+    QString fileStr = stream.readAll();
     file.close();
-    std::cout << file_str.toStdString() << std::endl;
+    std::cout << fileStr.toStdString() << std::endl;
     std::cout << "---------------------------------------------------------------------------" << std::endl;
 }
-void CreateFolder(const QString &folderPath) {
+void createFolder(const QString &folderPath) {
     QDir dir(folderPath);
     if (!dir.exists()) {
         dir.mkdir(folderPath);
@@ -64,29 +54,29 @@ int main(int argc, char *argv[])
 #ifdef __linux__
 
     // 插入 -platform xcb 参数
-    char *new_argv[argc + 2];
-    new_argv[0] = argv[0];
-    new_argv[1] = const_cast<char*>("-platform");
-    new_argv[2] = const_cast<char*>("xcb");
+    char *newArgv[argc + 2];
+    newArgv[0] = argv[0];
+    newArgv[1] = const_cast<char*>("-platform");
+    newArgv[2] = const_cast<char*>("xcb");
 
     for (int i = 1; i < argc; ++i) {
-        new_argv[i + 2] = argv[i];
+        newArgv[i + 2] = argv[i];
     }
 
-    int new_argc = argc + 2;
-    QApplication a(new_argc, new_argv);
+    int newArgc = argc + 2;
+    QApplication a(newArgc, newArgv);
 #else
     QApplication a(argc, argv);
 #endif
     //QApplication::setAttribute(Qt::AA_SetPlatformPlugin, QVariant("xcb"));
     printLogo();
 
-    CreateFolder(QDir::homePath() + "/ClassTopLand_Data");
+    createFolder(QDir::homePath() + "/ClassTopLand_Data");
     a.setApplicationDisplayName("ClassTopLand");
     a.setStyleSheet(getStyleSheet(":/qss/global.qss"));
     QApplication::setQuitOnLastWindowClosed(false);
     showLog("MainWindow is Show",LogStatus::INFO);
-    MainTableWidget *w = new MainTableWidget();
+    MainTableWidget *mainWidget = new MainTableWidget();
 
 
 #ifdef __linux__
@@ -97,24 +87,24 @@ int main(int argc, char *argv[])
     // 物理尺寸（实际像素）
     qreal ratio = screen->devicePixelRatio();
     QSize physicalSize = logicalSize * ratio;
-    int scr_w = physicalSize.width();
-    int scr_h = physicalSize.height();
-    DayTimerWidget *dtw = new DayTimerWidget();
-    dtw->move((scr_w - dtw->width()),(scr_h - dtw->height()) * 0.95);
-    if (TimerisOpen()) {
-        dtw->show();
+    int screenWidth = physicalSize.width();
+    int screenHeight = physicalSize.height();
+    DayTimerWidget *dayTimerWidget = new DayTimerWidget();
+    dayTimerWidget->move((screenWidth - dayTimerWidget->width()),(screenHeight - dayTimerWidget->height()) * 0.95);
+    if (timerIsOpen()) {
+        dayTimerWidget->show();
     }
-    w->showWindow(scr_w, scr_h);
+    mainWidget->show();
 #else
-    QScreen *scr = a.primaryScreen();
-    int scr_w = scr->size().width();
-    int scr_h = scr->size().height();
-    // w->move((scr_w - w->width()) / 2, 0);
-    w->showWindow(scr_w, scr_h);
-    DayTimerWidget *dtw = new DayTimerWidget();
-    dtw->move((scr_w - dtw->width()),(scr_h - dtw->height()) * 0.95);
-    if (TimerisOpen()) {
-        dtw->show();
+    QScreen *screen = a.primaryScreen();
+    int screenWidth = screen->size().width();
+    int screenHeight = screen->size().height();
+    // mainWidget->move((screenWidth - mainWidget->width()) / 2, 0);
+    mainWidget->show();
+    DayTimerWidget *dayTimerWidget = new DayTimerWidget();
+    dayTimerWidget->move((screenWidth - dayTimerWidget->width()),(screenHeight - dayTimerWidget->height()) * 0.95);
+    if (timerIsOpen()) {
+        dayTimerWidget->show();
     }
 #endif
     return a.exec();

@@ -16,6 +16,7 @@
 #include <QInputDialog>
 #include <QLineEdit>
 #include "../AppLog/AppLog.h"
+#include "../Utils/Utils.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class AppendixTableManager; }
@@ -34,7 +35,7 @@ private slots:
     void addAppendTables();
     void editAppendTables();
 signals:
-    void editAppendixTable(QString TableName);
+    void editAppendixTable(QString tableName);
 private:
     void readAppendixTables();
     void initSignal();

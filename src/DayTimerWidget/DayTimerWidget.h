@@ -15,6 +15,7 @@
 #include<QFont>
 #include<qfontdatabase.h>
 #include"../AppLog/AppLog.h"
+#include"../Utils/Utils.h"
 QT_BEGIN_NAMESPACE
 namespace Ui { class DayTimerWidget; }
 QT_END_NAMESPACE
@@ -24,22 +25,22 @@ Q_OBJECT
 
 public:
     explicit DayTimerWidget(QWidget *parent = nullptr);
-    QTimer* timer_timer;
+    QTimer* refreshTimer;
     QFontMetrics *fm = nullptr;
     void readTimeJson();
-    QJsonObject TimeJson;
+    QJsonObject timeJson;
     ~DayTimerWidget() override;
 public slots:
-    void reload_timer();
+    void reloadTimer();
 private:
     Ui::DayTimerWidget *ui;
-    QFont font_label2;
-    QFont font_label3;
-    QFont font_label5;
-    QFont font_label4;
-    QFont font_label7;
-    QFont font_label6;
-    QFont font_label4_end;
+    QFont fontLabel2;
+    QFont fontLabel3;
+    QFont fontLabel5;
+    QFont fontLabel4;
+    QFont fontLabel7;
+    QFont fontLabel6;
+    QFont fontLabel4End;
     bool fontsInitialized = false;
     void initFonts();
 };
