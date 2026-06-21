@@ -3,6 +3,15 @@
 
 #include "../API.h"
 #include "../Utils/Utils.h"
+
+void asyncSleep(unsigned int msec)
+{
+    QEventLoop loop;
+    QTimer::singleShot(msec, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
+
 MainTableWidget::MainTableWidget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::MainTableWidget)
@@ -36,20 +45,53 @@ MainTableWidget::~MainTableWidget()
 {
     delete ui;
 }
-void MainTableWidget::showStatus(QString str)
+void MainTableWidget::showStatusAutoSelect(QList<QString> strList)
 {
-    showLog("ShowStatused!",INFO);
+    if (strList.isEmpty())
+        return;
+
+    if (!statusMsgAnimation)
+        return;
+
     if (windowHidden)
     {
         on_hideWindow();
+        asyncSleep(700);
     }
+
+    for (int i = 0; i < strList.size(); ++i)
+    {
+        QString text = strList.at(i);
+        QFont ft("Microsoft YaHei UI", 18);
+        QFontMetrics fm(ft);
+        int textWidthPixel = fm.horizontalAdvance(text);
+        if (textWidthPixel <= width() - 60)
+        {
+            showStatus(text);
+            return;
+        }
+    }
+    showStatus(strList.last());
+}
+
+void MainTableWidget::showStatus(QString str)
+{
+    if (!statusMsgAnimation)
+        return;
+
+    if (windowHidden)
+    {
+        on_hideWindow();
+        asyncSleep(700);
+    }
+
     ui->label_3->setText(str);
     statusMsgAnimation->setEasingCurve(QEasingCurve::OutExpo);
     statusMsgAnimation->setStartValue(QRect(width()/2, ANIM_OFFSET_Y, CLASS_BLOCK_SIZE, CLASS_BLOCK_SIZE));
     statusMsgAnimation->setEndValue(QRect(0,0,width(),49));
     statusMsgAnimation->setDirection(QAbstractAnimation::Forward);
     statusMsgAnimation->start();
-    QTimer::singleShot(5000,this,[&]()
+    QTimer::singleShot(5000, this, [this]()
     {
         //statusMsgAnimation->setEasingCurve(QEasingCurve::InOutSine);
         statusMsgAnimation->setStartValue(QRect(width()/2, ANIM_OFFSET_Y, CLASS_BLOCK_SIZE, CLASS_BLOCK_SIZE));
@@ -100,7 +142,7 @@ void MainTableWidget::initUi(){
 }
 void MainTableWidget::on_hideWindow()
 {
-    if (isFinished)
+    if (isFinished || !hideAnimation)
     {
         return;
     }
@@ -133,6 +175,7 @@ void MainTableWidget::initSignal(){
     connect(editWindow, &TableEditWidget::refetchTableSignal, this, &MainTableWidget::refetchTableSlot);
     connect(refetchThread,&RefetchTableThread::tst,ui->class_time,&QLabel::setText,Qt::QueuedConnection);
     connect(refetchThread,&RefetchTableThread::showStatusMessage,this,&MainTableWidget::showStatus,Qt::QueuedConnection);
+    connect(refetchThread,&RefetchTableThread::showStatusMessageAS,this,&MainTableWidget::showStatusAutoSelect,Qt::QueuedConnection);
     connect(refetchThread,&RefetchTableThread::changeStackedIndex,this,[=, this](int idx)
     {
         ui->stackedWidget->setCurrentIndex(idx);
@@ -234,16 +277,10 @@ void RefetchTableThread::run(){
             emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:#1191d3; border-style: solid; color: black;");
             if (currentDateTime.secsTo(currentClassStartTime) == 0 and !classStarted) {  // 当前时间 - 当前课程开始时间 == 0 (刚开始上课)
                 classStarted = true;
-                if (canShow(QString("%1 已经上课，请做好上课准备").arg(currentClass["name"].toString()))) {
-                    emit showStatusMessage(QString("%1 已经上课，请做好上课准备").arg(currentClass["name"].toString()));
-                }
-                else if (canShow(QString("%1 已上课").arg(currentClass["name"].toString()))) {
-                    emit showStatusMessage(QString("%1 已上课").arg(currentClass["name"].toString()));
-                }
-                else {
-                    emit showStatusMessage(QString("上课时间到"));
-                }
-                
+                emit showStatusMessageAS({QString("%1 已经上课，请回到作为").arg(currentClass["name"].toString()),
+                        QString("%1 已上课").arg(currentClass["name"].toString()),
+                        QString("上课时间到")
+                });
             }
             else {
                 int diffTime = currentDateTime.secsTo(currentClassEndTime);
@@ -262,16 +299,10 @@ void RefetchTableThread::run(){
                 emit setClassStyleSheet(idx + 1, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
                 if (currentDateTime.secsTo(currentClassEndTime) == 0 and classStarted) {
                     classStarted = false;
-                    
-                    if (canShow(QString("%1 已经下课，请做好下节课上课准备").arg(currentClass["name"].toString()))) {
-                        emit showStatusMessage(QString("%1 已经下课，请做好下节课上课准备").arg(currentClass["name"].toString()));
-                    }
-                    else if (canShow(QString("%1 已下课").arg(currentClass["name"].toString()))) {
-                        emit showStatusMessage(QString("%1 已下课").arg(currentClass["name"].toString()));
-                    }
-                    else {
-                        emit showStatusMessage(QString("下课时间到"));
-                    }
+                    emit showStatusMessageAS({QString("%1 已经下课，请做好下节课上课准备").arg(currentClass["name"].toString()),
+                        QString("%1 已下课").arg(currentClass["name"].toString()),
+                        QString("下课时间到")
+                    });
                 }
                 int diffTime = currentDateTime.secsTo(nextClassStartTime); // 当前时间 - 下一节课开始时间 (课间还剩多久)
                 int hour = diffTime / 3600;
@@ -281,15 +312,10 @@ void RefetchTableThread::run(){
                 QString displayString = QString("%1:%2:%3").arg(hour, 2, 10, QLatin1Char('0')).arg(min, 2, 10, QLatin1Char('0')).arg(sec, 2, 10, QLatin1Char('0'));
                 emit tst(displayString);
                 if (hour == 0 && min == 2 && sec == 0) {
-                    if (canShow(QString("%1 即将上课，请做好上课准备").arg(nextClass["name"].toString()))) {
-                        emit showStatusMessage(QString("%1 即将上课，请做好上课准备").arg(nextClass["name"].toString()));
-                    }
-                    else if (canShow(QString("%1 即将上课").arg(nextClass["name"].toString()))) {
-                        emit showStatusMessage(QString("%1 即将上课").arg(nextClass["name"].toString()));
-                    }
-                    else {
-                        emit showStatusMessage(QString("即将上课"));
-                    }
+                    emit showStatusMessageAS({QString("%1 即将上课，请做好上课准备").arg(nextClass["name"].toString()),
+                        QString("%1 即将上课").arg(nextClass["name"].toString()),
+                        QString("即将上课")
+                    });
                 }
                 msleep(50);
                 continue;

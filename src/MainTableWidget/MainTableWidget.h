@@ -28,7 +28,7 @@
 #include<QTranslator>
 #include"../AppLog/AppLog.h"
 #include<QTimerEvent>
-
+#include <QList>
 #include"../GlassHelper/GlassHelper.h"
 #ifdef WIN32
 #include<qt_windows.h>
@@ -66,6 +66,7 @@ signals:
     void repaint();
     void tst(QString text);
     void showStatusMessage(QString str);
+    void showStatusMessageAS(QList<QString> strList);
     void changeStackedIndex(int idx);
     void addClass(QString text);
     void setClassStyleSheet(int idx,QString styleSheet);
@@ -113,6 +114,7 @@ public slots:
     void on_showConfig_modal();
     void huanKeSlot();
     void showStatus(QString str);
+    void showStatusAutoSelect(QList<QString> strList);
     void initAnimation();
     int onGetWidth() {
         return width();
