@@ -80,6 +80,7 @@ private slots:
     void saveBoolConfig(const QString &key, bool value);
     void _startUpdateTool();
     void on_cellChanged(int row,int column);
+    void on_deleteButton_clicked();
 signals:
     void refetchTableSignal();
     void refetchToolBarSignal();

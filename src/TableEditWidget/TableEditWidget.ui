@@ -157,7 +157,7 @@ border-bottom:3px solid #1191d3;
            <number>25</number>
           </property>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,2,2,2">
+           <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,2,2,2,2">
             <item>
              <widget class="QLineEdit" name="lineEdit">
               <property name="minimumSize">
@@ -225,6 +225,19 @@ border-bottom:3px solid #1191d3;
               </property>
               <property name="text">
                <string>添加</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteButton">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>删除</string>
               </property>
              </widget>
             </item>

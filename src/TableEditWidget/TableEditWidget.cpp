@@ -103,7 +103,7 @@ void TableEditWidget::setConfig(QJsonObject obj){
     ui->edit_name_eng->setText(configJson["english_tag"].toString());
 }
 void TableEditWidget::on_timerInfo_changed(){
-    configJson["endTime"] = ui->timer_time->dateTime().toString("yyyy-MM-dd hh:mm:ss");
+    configJson["end_time"] = ui->timer_time->dateTime().toString("yyyy-MM-dd hh:mm:ss");
     configJson["label_tag"] = ui->edit_name->text();
     configJson["english"] = QString("There are () $\nleft until %1").arg(ui->edit_name_eng->text());
     configJson["english_end"] = QString("There is not a $\nleft until %1").arg(ui->edit_name_eng->text());
@@ -246,10 +246,58 @@ void TableEditWidget::on_pushButton_clicked()
     }
 }
 
-
-
-
-
+void TableEditWidget::on_deleteButton_clicked()
+{
+    auto result = QMessageBox::question(this,"提示","确定删除吗？");
+    if (result == QMessageBox::No) return;
+    QString key;
+    if (ui->radioButton->isChecked()){
+        key = "Mon";
+    }else
+    if (ui->radioButton_2->isChecked()){
+        key = "Tue";
+    }else
+    if (ui->radioButton_3->isChecked()){
+        key = "Wed";
+    }else
+    if (ui->radioButton_4->isChecked()){
+        key = "Thu";
+    }else
+    if (ui->radioButton_5->isChecked()){
+        key = "Tri";
+    }else if(ui->radioButton_6->isChecked()){
+        key = currentEditAppendixTableName;
+    }
+    QJsonArray editArray;
+    if (ui->tableWidget->currentRow() == -1)
+    {
+        QMessageBox::critical(this,"错误","未选择项！请选择一行删除");
+    }
+    if (isEditAppendixTable){
+        editArray = timeTableJson["appendixTables"][key].toArray();
+    }else{
+        editArray = timeTableJson[key].toArray();
+    }
+    editArray.removeAt(ui->tableWidget->currentRow());
+    if (isEditAppendixTable){
+        QJsonObject appendixTablesObj = timeTableJson["appendixTables"].toObject();
+        appendixTablesObj[key] = editArray;
+        timeTableJson["appendixTables"] = appendixTablesObj;
+    }else{
+        timeTableJson[key] = editArray;
+    }
+    QFile configFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
+    configFile.open(QFile::WriteOnly);
+    QJsonDocument tempDoc;
+    tempDoc.setObject(timeTableJson);
+    configFile.write(tempDoc.toJson(QJsonDocument::Indented));
+    configFile.close();
+    if (isEditAppendixTable){
+        refechTableWidget(timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray());
+    }else{
+        toggleded();
+    }
+}
 
 void TableEditWidget::saveBoolConfig(const QString &key, bool value)
 {

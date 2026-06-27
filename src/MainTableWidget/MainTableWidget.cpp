@@ -277,7 +277,7 @@ void RefetchTableThread::run(){
             emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:#1191d3; border-style: solid; color: black;");
             if (currentDateTime.secsTo(currentClassStartTime) == 0 and !classStarted) {  // 当前时间 - 当前课程开始时间 == 0 (刚开始上课)
                 classStarted = true;
-                emit showStatusMessageAS({QString("%1 已经上课，请回到作为").arg(currentClass["name"].toString()),
+                emit showStatusMessageAS({QString("%1 已经上课，请回到座位").arg(currentClass["name"].toString()),
                         QString("%1 已上课").arg(currentClass["name"].toString()),
                         QString("上课时间到")
                 });
