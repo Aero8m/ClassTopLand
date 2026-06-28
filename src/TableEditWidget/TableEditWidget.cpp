@@ -12,6 +12,8 @@ TableEditWidget::TableEditWidget(QWidget *parent)
     connect(ui->radioButton_3,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
     connect(ui->radioButton_4,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
     connect(ui->radioButton_5,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
+    connect(ui->radioButton_7,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
+    connect(ui->radioButton_8,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
     connect(ui->label,&ClickLabel::clicked,this,[=, this]{
         if (clickCount >=10){
             clickCount=0;
@@ -161,6 +163,14 @@ void TableEditWidget::toggleded(){
     if (ui->radioButton_5->isChecked()){
         isEditAppendixTable = false;
         refechTableWidget(timeTableJson.value("Fri").toArray());
+    }else
+    if (ui->radioButton_7->isChecked()){
+        isEditAppendixTable = false;
+        refechTableWidget(timeTableJson.value("Sat").toArray());
+    }else
+    if (ui->radioButton_8->isChecked()){
+        isEditAppendixTable = false;
+        refechTableWidget(timeTableJson.value("Sun").toArray());
     }
 }
 void TableEditWidget::addItem(QString key){
@@ -241,6 +251,12 @@ void TableEditWidget::on_pushButton_clicked()
     }else
     if (ui->radioButton_5->isChecked()){
         addItem("Fri");
+    }else
+    if (ui->radioButton_7->isChecked()){
+        addItem("Sat");
+    }else
+    if (ui->radioButton_8->isChecked()){
+        addItem("Sun");
     }else if(ui->radioButton_6->isChecked()){
         addItem(currentEditAppendixTableName);
     }
@@ -264,7 +280,13 @@ void TableEditWidget::on_deleteButton_clicked()
         key = "Thu";
     }else
     if (ui->radioButton_5->isChecked()){
-        key = "Tri";
+        key = "Fri";
+    }else
+    if (ui->radioButton_7->isChecked()){
+        key = "Sat";
+    }else
+    if (ui->radioButton_8->isChecked()){
+        key = "Sun";
     }else if(ui->radioButton_6->isChecked()){
         key = currentEditAppendixTableName;
     }
@@ -311,28 +333,7 @@ void TableEditWidget::saveBoolConfig(const QString &key, bool value)
     QMessageBox::information(this, tr("提示"), tr("重启生效"));
 }
 
-void TableEditWidget::on_checkBox_2_clicked(bool checked)
-{
-    saveBoolConfig("zuan_status", checked);
-}
 
-
-void TableEditWidget::on_checkBox_clicked(bool checked)
-{
-    saveBoolConfig("muyu_status", checked);
-}
-
-
-void TableEditWidget::on_chkHide_clicked(bool checked)
-{
-    saveBoolConfig("toolbox_status", checked);
-}
-
-void TableEditWidget::_startUpdateTool() {
-    //system(QString("start %1\\updateTool \"v%2\"").arg(QDir::homePath() + "/ClassTopLand_Data").arg(APP_VERSION).toStdWString().c_str());
-    return;
-
-}
 void TableEditWidget::on_cellChanged(int row, int column) {
     ui->tableWidget->blockSignals(true);
     QJsonArray currentTable;
@@ -356,6 +357,14 @@ void TableEditWidget::on_cellChanged(int row, int column) {
     else if (ui->radioButton_5->isChecked()) {
         currentTable = timeTableJson["Fri"].toArray();
         currentTableName = "Fri";
+    }
+    else if (ui->radioButton_7->isChecked()) {
+        currentTable = timeTableJson["Sat"].toArray();
+        currentTableName = "Sat";
+    }
+    else if (ui->radioButton_8->isChecked()) {
+        currentTable = timeTableJson["Sun"].toArray();
+        currentTableName = "Sun";
     }
     else if (ui->radioButton_6->isChecked()) {
         currentTable = timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray();

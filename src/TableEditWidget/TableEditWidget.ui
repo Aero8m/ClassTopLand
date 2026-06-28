@@ -324,6 +324,20 @@ border-bottom:3px solid #1191d3;
              </widget>
             </item>
             <item>
+             <widget class="QRadioButton" name="radioButton_7">
+              <property name="text">
+               <string>周六</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioButton_8">
+              <property name="text">
+               <string>周日</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QRadioButton" name="radioButton_6">
               <property name="enabled">
                <bool>false</bool>

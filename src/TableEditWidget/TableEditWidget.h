@@ -67,18 +67,10 @@ public slots:
     void toggleded();
 private slots:
     void on_pushButton_clicked();
-
-    void on_checkBox_2_clicked(bool checked);
-
-    void on_checkBox_clicked(bool checked);
-
-    void on_chkHide_clicked(bool checked);
-
     void on_show_AppendixTableManager();
     void on_timerInfo_changed();
     void on_editAppendixTable(QString tableName);
     void saveBoolConfig(const QString &key, bool value);
-    void _startUpdateTool();
     void on_cellChanged(int row,int column);
     void on_deleteButton_clicked();
 signals:
