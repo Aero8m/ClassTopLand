@@ -432,12 +432,7 @@ void MainTableWidget::createMenu(){
 void MainTableWidget::on_showMainAction(){
     editWindow->show();
 }
-void MainTableWidget::on_showConfig_modal(){
-    editWindow->show();
-    while (editWindow->isVisible()){
-        QCoreApplication::processEvents(QEventLoop::AllEvents,1145141919810);
-    }
-}
+
 void MainTableWidget::on_exitAppAction(){
     qApp->quit();
 }

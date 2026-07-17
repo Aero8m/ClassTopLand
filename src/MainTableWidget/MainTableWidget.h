@@ -111,7 +111,6 @@ public:
 
 public slots:
     void refetchTableSlot();
-    void on_showConfig_modal();
     void huanKeSlot();
     void showStatus(QString str);
     void showStatusAutoSelect(QList<QString> strList);
