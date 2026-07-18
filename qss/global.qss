@@ -34,14 +34,16 @@ QDateTimeEdit:hover,QDateTimeEdit:focus{
 border-bottom: 1px solid #1191d3;
 }
 QDateTimeEdit::down-button{
-width:7px;
+width:13.5px;
+height:13.5px;
 background:#F0F0F0;
 image: url(":/res/down.png");
-border-radius: 3px; /* 边框圆角 */
+border-radius: 3px;
 }
 QDateTimeEdit::up-button{
-width:7px;
-border-radius: 3px; /* 边框圆角 */
+width:13.5px;
+height:13.5px;
+border-radius: 3px;
 background:#F0F0F0;
 image: url(":/res/up.png");
 }
@@ -180,9 +182,7 @@ image:url(":/res/checkbutton/unchecked.png");
 QCheckBox::indicator:checked{
 image:url(":/res/checkbutton/checked.png");
 }
-QCheckBox:hover{
-color:#1191d3;
-}
+
 
 QTableWidget{
 background:#ffffff;

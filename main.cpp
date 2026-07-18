@@ -1,6 +1,7 @@
 #include "./src/MainTableWidget/MainTableWidget.h"
 #include"./src/DayTimerWidget/DayTimerWidget.h"
 #include <QApplication>
+#include <QStyleHints>
 #include <QLocale>
 #include <QTranslator>
 #include<QDir>
@@ -9,9 +10,7 @@
 #include<QFontDatabase>
 #include<QStyleFactory>
 #include <iostream>
-#if defined(_MSC_VER) && (_MSC_VER >= 1600)    
-# pragma execution_character_set("utf-8")    
-#endif
+
 
 #include"./src/AppLog/AppLog.h"
 #include"./src/NetworkRequests/NetworkRequests.h"
@@ -67,6 +66,7 @@ int main(int argc, char *argv[])
     QApplication a(newArgc, newArgv);
 #else
     QApplication a(argc, argv);
+    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
 #endif
     //QApplication::setAttribute(Qt::AA_SetPlatformPlugin, QVariant("xcb"));
     printLogo();

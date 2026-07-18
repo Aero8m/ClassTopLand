@@ -11,9 +11,9 @@
 #define COMPANY_NAME           "Aero8m"
 #define INTERNAL_NAME          "ClassTopLand"
 #define FILE_DESCRIPTION       "ClassTopLand - Ö÷³ÌÐò"
-#define LEGAL_COPYRIGHT        "Copyright 2026 Aero8m. All rights reserved."
+#define LEGAL_COPYRIGHT        "Powered By Aero8m 2024-2026"
 #define ORIGINAL_FILE_NAME     "ClassTopLand.exe"
 #define PRODUCT_NAME           "ClassTopLand"
-#define ORGANIZATION_DOMAIN    "https://github.com/Aero80wd/ClassTopLand"
+#define ORGANIZATION_DOMAIN    "https://github.com/Aero8m/ClassTopLand"
 
 #endif

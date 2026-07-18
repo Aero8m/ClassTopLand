@@ -52,13 +52,14 @@ public:
         QFont ft("Microsoft YaHei UI",18);// 获取当前字体的格式，里面有文本大小和文本像素大小
         QFontMetrics fm(ft); // 以当前的字体格式为基础
         int textWidthPixel = fm.horizontalAdvance(text); //以当前的字体格式为基础,计算字体的像素宽度
-        qDebug() << "textWidthPixel:" << textWidthPixel << "getWidth():" << getWidth() << "getWidth() - 60:" << getWidth() - 60;
         if (textWidthPixel > emit getWidth() - 60) {
             return false;
         }
-        else {
-            return true;
-        }
+        return true;
+    }
+    void setTodayTable(QJsonArray today_table)
+    {
+        todayTable = today_table;
     }
     bool stopFlag = false;
 signals:
@@ -75,7 +76,7 @@ signals:
     void windowTop();
     int getWidth();
 private:
-    bool isProcessRunning(QString& processName);
+    QJsonArray todayTable;
 };
 class MainTableWidget : public QWidget
 {
@@ -139,6 +140,8 @@ private:
     qint64 secTime = 0;
     QTimer* topTimer;
     bool isFinished = false;
+    QJsonObject timeTable;
+    QJsonArray todayTable;
 
     static constexpr int SIDEBAR_WIDTH = 154;
     static constexpr int CLASS_BLOCK_SIZE = 49;

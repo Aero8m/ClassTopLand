@@ -1,7 +1,5 @@
 #include "./MainTableWidget.h"
 #include "ui_MainTableWidget.h"
-
-#include "../API.h"
 #include "../Utils/Utils.h"
 
 void asyncSleep(unsigned int msec)
@@ -18,13 +16,14 @@ MainTableWidget::MainTableWidget(QWidget *parent)
 {
     ui->setupUi(this);
     editWindow = new TableEditWidget();
+    refetchThread = new RefetchTableThread();
     readConfig();
     readTimeTable();
     
     editWindow->setConfig(config);
 
     initUi();
-    refetchThread = new RefetchTableThread();
+
     topTimer = new QTimer();
 
 #ifdef WIN32
@@ -222,19 +221,20 @@ void MainTableWidget::initSignal(){
 
 }
 void MainTableWidget::readTimeTable(){
-    auto result = readJsonFile(TABLE_JSON);
+    auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
     if (!result) return;
     timeTable = *result;
     initTodayTable();
 }
 void MainTableWidget::readConfig(){
-    auto result = readJsonFile(CONFIG_JSON);
+    auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
     if (!result) return;
     config = *result;
 }
 void MainTableWidget::initTodayTable(){
     QDateTime currentDateTime = QDateTime::currentDateTime();
     todayTable = timeTable.value(currentDateTime.toString("ddd")).toArray();
+    refetchThread->setTodayTable(todayTable);
     resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
     ui->stackedWidget->resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
     ui->status_show->resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
@@ -245,7 +245,6 @@ void RefetchTableThread::run(){
     {
         emit changeStackedIndex(0);
     }
-    qDebug()<<todayTable;
     for (int i=0;i<todayTable.count();i++)
     {
         emit addClass(QString(todayTable[i].toObject()["name"].toString().at(0)));
@@ -345,13 +344,15 @@ QDateTime RefetchTableThread::getTodayTime(QString str){
 
 void MainTableWidget::huanKeSlot(){
     QStringList items;
-    items << "星期一" << "星期二" << "星期三" << "星期四" << "星期五";
+    items << "星期一" << "星期二" << "星期三" << "星期四" << "星期五" << "星期六" << "星期日";
     QMap<QString,QString> enCnDay;
     enCnDay["星期一"] = "Mon";
     enCnDay["星期二"] = "Tue";
     enCnDay["星期三"] = "Wed";
     enCnDay["星期四"] = "Thu";
     enCnDay["星期五"] = "Fri";
+    enCnDay["星期六"] = "Sat";
+    enCnDay["星期日"] = "Sun";
     auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
     if (!result) return;
     QJsonObject appendixTables = (*result)["appendixTables"].toObject();
@@ -376,6 +377,7 @@ void MainTableWidget::huanKeSlot(){
     {
         delete widget;
     }
+    refetchThread->setTodayTable(todayTable);
     refetchThread->start();
     resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
     ui->stackedWidget->resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
@@ -450,10 +452,6 @@ void MainTableWidget::refetchTableSlot(){
     resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
     ui->stackedWidget->resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
     ui->status_show->resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE,height());
-    // QScreen *scr = qApp->primaryScreen();
-    // int screenW = screen->size().width();
-    // int screenH = screen->size().height();
-    // move((screenW - width()) / 2, 0);
     if (windowHidden) on_hideWindow();
     sysTrayIcon->showMessage(tr("提示"),tr("配置已成功应用！"),QSystemTrayIcon::MessageIcon::Information,500);
 }

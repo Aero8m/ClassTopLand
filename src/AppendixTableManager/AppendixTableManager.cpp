@@ -44,7 +44,6 @@ void AppendixTableManager::addAppendTables() {
     dialog.setCancelButtonText(QObject::tr("取消"));
     dialog.setFixedSize(350,250);
     dialog.setTextValue("");
-    // 设置了 QPushButtuon 的三态， QLineEdit 的样式， QLable 和 整体的背景色
     QString style = "QPushButton{background:#1191d3; color:rgb(255,255,255); border-radius:3px; min-height:30px; min-width:60px; font:13px \"Microsoft YaHei\";}"
                     "QPushButton:hover{background:#1191d0;}"
                     "QPushButton:pressed{background:rgb(32,75,148);}"

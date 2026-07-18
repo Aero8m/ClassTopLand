@@ -174,6 +174,11 @@ void TableEditWidget::toggleded(){
     }
 }
 void TableEditWidget::addItem(QString key){
+    if (ui->lineEdit->text() == "")
+    {
+        QMessageBox::critical(this,"错误","请输入课程名称");
+        return;
+    }
     QJsonObject insertJson;
     insertJson.insert("name",ui->lineEdit->text());
     insertJson.insert("start",ui->timeEdit->text());
@@ -185,28 +190,14 @@ void TableEditWidget::addItem(QString key){
         editArray = timeTableJson[key].toArray();
     }
     editArray.append(insertJson);
-
-    // for (int x = 0;x<editArray.count()-1;x++){
-    //     for (int y = x+1;y<editArray.count();y++){
-    //         if (QTime::fromString(editArray[y].toObject().value("start").toString()) < QTime::fromString(editArray[x].toObject().value("start").toString())){
-    //             min_index = y;
-    //         }
-    //     }
-    //     QJsonObject max_Object = editArray[x].toObject();
-    //     editArray[x] = editArray[min_index];
-    //     editArray[min_index] = max_Object;
-    // }
-
-    for (int i = 0; i < editArray.count() - 1; i++) {	// 操作i至len-1个数据（剩下最后一个不需要操作）
+    for (int i = 0; i < editArray.count() - 1; i++) {
         int index = i;	// 赋初值给索引
-        for (int j = i + 1; j < editArray.count(); j++) {	// 比较剩余未排序的数据
+        for (int j = i + 1; j < editArray.count(); j++) {
             if (getTodayTime(editArray[j].toObject().value("start").toString()) < getTodayTime(editArray[index].toObject().value("start").toString())) {	// 当剩余的数据有比索引对应的数小时，更新索引
                 index = j;
             }
         }
-        // 当索引不等于初值时
         if (index != i) {
-            // 交换数据
             QJsonObject temp = editArray[index].toObject();
             editArray[index] = editArray[i];
             editArray[i] = temp;

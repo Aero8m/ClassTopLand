@@ -5,8 +5,6 @@
   <h1 align="center">
   ClassTopLand
 </h1>
-<h3 style="text-align: center">注意：新发行版采用自动构建，请前往 安装 部分的链接下载！</h3>
-
 <p align="center">
   基于Qt6 Widgets的校园桌面课程显示组件
 </p>
@@ -38,10 +36,7 @@
 
 
 ## 安装
-1. 下载<a href="https://autobuild.aero8m.cn/ClassTopLand">https://autobuild.aero8m.cn/ClassTopLand</a>内的安装包，根据安装包提示进行安装。
-> **提示**<br/>
-> 最上面的安装包通常是最新版本，列表按时间倒序排序！
-
+1. 前往[Github Releases](https://github.com/Aero8m/ClassTopLand/releases)下载最新版本安装包，按照提示安装。 如果网络环境不佳，也可以前往[Aero8m AutoBuild](https://autobuild.aero8m.cn/ClassTopLand)下载
 2. 打开程序后根据提示进行设置。
 3. 开始使用。
 > **注意**
