@@ -27,11 +27,13 @@ std::optional<QJsonObject> readJsonFile(const QString &filePath)
 
 QString getStyleSheet(QString fileName) {
     QFile file(fileName);
-    file.open(QFile::ReadOnly);
+    if (!file.open(QFile::ReadOnly)) {
+        return {};
+    }
     QTextStream fileText(&file);
     QString styleSheet = fileText.readAll();
+    file.close();
     return styleSheet;
-
 }
 void loadStyleSheet(QWidget* widget, QString fileName) {
     QFile file(fileName);

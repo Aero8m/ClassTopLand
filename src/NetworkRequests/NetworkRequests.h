@@ -30,6 +30,7 @@ class NetworkRequests : public QObject{
     void operator=(const NetworkRequests &other);
     void start(QJsonObject data = QJsonObject(),QJsonObject headers=QJsonObject(),QJsonObject cookie = QJsonObject(),QString ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0");
     private:
+    QNetworkAccessManager *manager = nullptr;
     void get(QUrl url);
     void post(QUrl url,QJsonObject data,QJsonObject headers=QJsonObject(),QJsonObject cookie = QJsonObject(),QString ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0");
     void readJson(QByteArray data);

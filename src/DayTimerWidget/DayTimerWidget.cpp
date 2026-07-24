@@ -24,8 +24,10 @@ DayTimerWidget::DayTimerWidget(QWidget *parent) :
 }
 
 DayTimerWidget::~DayTimerWidget() {
-    delete ui;
+    refreshTimer->stop();
+    delete refreshTimer;
     delete fm;
+    delete ui;
 }
 
 void DayTimerWidget::initFonts() {

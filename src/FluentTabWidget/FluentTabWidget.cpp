@@ -10,8 +10,6 @@ FluentTabBar::FluentTabBar(QWidget *parent)
         background:#f3f3f3;
         width:100%;
         border-radius:0px;
-
-
         padding:5px;
         }
         QTabBar::tab:hover{

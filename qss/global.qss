@@ -34,14 +34,14 @@ QDateTimeEdit:hover,QDateTimeEdit:focus{
 border-bottom: 1px solid #1191d3;
 }
 QDateTimeEdit::down-button{
-width:13.5px;
+width:11px;
 height:13.5px;
 background:#F0F0F0;
 image: url(":/res/down.png");
 border-radius: 3px;
 }
 QDateTimeEdit::up-button{
-width:13.5px;
+width:11px;
 height:13.5px;
 border-radius: 3px;
 background:#F0F0F0;

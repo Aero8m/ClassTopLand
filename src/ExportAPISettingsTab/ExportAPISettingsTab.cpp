@@ -11,6 +11,9 @@ ExportAPISettingsTab::ExportAPISettingsTab(QWidget *parent)
 
 ExportAPISettingsTab::~ExportAPISettingsTab()
 {
+	delete apiListReq;
+	delete exApiTableReq;
+	delete exApiTokenReq;
 	delete ui;
 }
 

@@ -45,7 +45,7 @@ QT_END_NAMESPACE
 class RefetchTableThread : public QThread{
     Q_OBJECT
 public:
-    QDateTime getTodayTime(QString str);
+    QDateTime getTodayTime(QString str, QDate date = QDate::currentDate());
 
     void run();
     bool canShow(QString text) {
