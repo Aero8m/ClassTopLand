@@ -7,13 +7,13 @@ NetworkRequests::NetworkRequests(RequestType type,QUrl url)
 {
     reqType = type;
     reqUrl = url;
+    manager = new QNetworkAccessManager(this);
 }
 void NetworkRequests::get(QUrl url)
 {
-    QNetworkAccessManager *netManager = new QNetworkAccessManager(this);
     QNetworkRequest request;
     request.setUrl(url);
-    connect(netManager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
+    connect(manager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
     {
         showLog(QString("Status Code:%1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()),INFO);
         if (reply->error())
@@ -27,14 +27,14 @@ void NetworkRequests::get(QUrl url)
             replyString = QString::fromUtf8(data);
             readJson(data);
         }
+        reply->deleteLater();
     });
-    netManager->get(request);
+    manager->get(request);
 
 }
 void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonObject cookie,QString ua)
 {
     QNetworkRequest request;
-    QNetworkAccessManager* naManager = new QNetworkAccessManager(this);
     request.setHeader(QNetworkRequest::ContentTypeHeader,"application/json");
     if (!headers.isEmpty())
     {
@@ -49,13 +49,12 @@ void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonOb
     }
     request.setRawHeader("User-Agent",ua.toUtf8());
     request.setUrl(url);
-    connect(naManager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
+    connect(manager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
     {
         if (reply->error())
         {
             showLog(QString("Request Error %1：").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()) + reply->errorString(),ERR);
             errorString = reply->errorString();
-            return;
         }else
         {
             showLog(QString("Request %1 ok, Reading...").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
@@ -63,8 +62,9 @@ void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonOb
             replyString = QString::fromUtf8(data);
             readJson(data);
         }
+        reply->deleteLater();
     });
-    naManager->post(request, QJsonDocument(data).toJson());
+    manager->post(request, QJsonDocument(data).toJson());
 }
 void NetworkRequests::readJson(QByteArray data)
 {

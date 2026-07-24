@@ -42,6 +42,21 @@ MainTableWidget::MainTableWidget(QWidget *parent)
 
 MainTableWidget::~MainTableWidget()
 {
+    if (refetchThread) {
+        refetchThread->stopFlag = true;
+        if (!refetchThread->wait(3000)) {
+            refetchThread->terminate();
+            refetchThread->wait();
+        }
+        delete refetchThread;
+    }
+    if (topTimer) {
+        topTimer->stop();
+        delete topTimer;
+    }
+    if (editWindow) {
+        delete editWindow;
+    }
     delete ui;
 }
 void MainTableWidget::showStatusAutoSelect(QList<QString> strList)
@@ -261,16 +276,17 @@ void RefetchTableThread::run(){
             return;
         }
 
+        QDate today = QDate::currentDate();
         QDateTime currentDateTime = QDateTime::currentDateTime();
         QJsonObject currentClass = todayTable[idx].toObject();
         QJsonObject prevClass = idx > 0 ? todayTable[idx - 1].toObject() : nullClass;
         QJsonObject nextClass = idx < todayTable.count() - 1 ? todayTable[idx + 1].toObject() : nullClass;
-        QDateTime currentClassStartTime = getTodayTime(currentClass.value("start").toString());
-        QDateTime currentClassEndTime = getTodayTime(currentClass.value("end").toString());
-        QDateTime prevClassStartTime = getTodayTime(prevClass.value("start").toString());
-        QDateTime prevClassEndTime = getTodayTime(prevClass.value("end").toString());
-        QDateTime nextClassStartTime = getTodayTime(nextClass.value("start").toString());
-        QDateTime nextClassEndTime = getTodayTime(nextClass.value("end").toString());
+        QDateTime currentClassStartTime = getTodayTime(currentClass.value("start").toString(), today);
+        QDateTime currentClassEndTime = getTodayTime(currentClass.value("end").toString(), today);
+        QDateTime prevClassStartTime = getTodayTime(prevClass.value("start").toString(), today);
+        QDateTime prevClassEndTime = getTodayTime(prevClass.value("end").toString(), today);
+        QDateTime nextClassStartTime = getTodayTime(nextClass.value("start").toString(), today);
+        QDateTime nextClassEndTime = getTodayTime(nextClass.value("end").toString(), today);
         if (currentDateTime.secsTo(currentClassEndTime)> 0) { // 当前时间 - 当前课程下课时间 >= 0 (上课中)
             if (idx > 0) emit setClassStyleSheet(idx - 1, "color: black;"); //去除上一节课的边框
             emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:#1191d3; border-style: solid; color: black;");
@@ -331,28 +347,25 @@ void RefetchTableThread::run(){
     emit initMainWindowAnimation();
 
 }
-QDateTime RefetchTableThread::getTodayTime(QString str){
+QDateTime RefetchTableThread::getTodayTime(QString str, QDate date){
     QStringList timeList = str.split(":");
     int hour = timeList[0].toInt();
     int minute = timeList[1].toInt();
 
     QDateTime dateTime;
-    dateTime.setDate(QDate::currentDate());
+    dateTime.setDate(date);
     dateTime.setTime(QTime(hour, minute));
     return dateTime;
 }
 
 void MainTableWidget::huanKeSlot(){
-    QStringList items;
-    items << "星期一" << "星期二" << "星期三" << "星期四" << "星期五" << "星期六" << "星期日";
-    QMap<QString,QString> enCnDay;
-    enCnDay["星期一"] = "Mon";
-    enCnDay["星期二"] = "Tue";
-    enCnDay["星期三"] = "Wed";
-    enCnDay["星期四"] = "Thu";
-    enCnDay["星期五"] = "Fri";
-    enCnDay["星期六"] = "Sat";
-    enCnDay["星期日"] = "Sun";
+    static const QStringList baseItems = {"星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"};
+    static const QMap<QString,QString> baseEnCnDay = {
+        {"星期一", "Mon"}, {"星期二", "Tue"}, {"星期三", "Wed"}, {"星期四", "Thu"},
+        {"星期五", "Fri"}, {"星期六", "Sat"}, {"星期日", "Sun"}
+    };
+    QStringList items = baseItems;
+    QMap<QString,QString> enCnDay = baseEnCnDay;
     auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
     if (!result) return;
     QJsonObject appendixTables = (*result)["appendixTables"].toObject();
@@ -365,7 +378,10 @@ void MainTableWidget::huanKeSlot(){
     if (!ok) return;
     QString day = enCnDay[cnDay];
     refetchThread->stopFlag = true;
-    refetchThread->wait(3000);
+    if (!refetchThread->wait(3000)) {
+        refetchThread->terminate();
+        refetchThread->wait();
+    }
     refetchThread->stopFlag = false;
     isFinished = false;
     if (day.contains("APPEND_",Qt::CaseSensitive)){
@@ -440,7 +456,10 @@ void MainTableWidget::on_exitAppAction(){
 }
 void MainTableWidget::refetchTableSlot(){
     refetchThread->stopFlag = true;
-    refetchThread->wait(3000);
+    if (!refetchThread->wait(3000)) {
+        refetchThread->terminate();
+        refetchThread->wait();
+    }
     refetchThread->stopFlag = false;
     readTimeTable();
     isFinished = false;

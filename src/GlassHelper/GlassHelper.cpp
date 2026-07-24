@@ -114,7 +114,7 @@ pSetWindowCompositionAttribute SetWindowCompositionAttribute = nullptr;
 void GlassHelper::enableBlurBehindWin32(QWidget* widget,int alpha) {
     if (getWindowsVersion() == Windows10p) {
         if (!SetWindowCompositionAttribute) {
-            HMODULE hModule = LoadLibrary(TEXT("user32.dll"));
+            HMODULE hModule = GetModuleHandle(TEXT("user32.dll"));
             if (hModule) {
                 SetWindowCompositionAttribute =
                     (pSetWindowCompositionAttribute)GetProcAddress(hModule, "SetWindowCompositionAttribute");

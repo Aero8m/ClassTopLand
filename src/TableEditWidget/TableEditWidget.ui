@@ -158,7 +158,7 @@ border-bottom:3px solid #1191d3;
            <number>25</number>
           </property>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,2,2,2,2">
+           <layout class="QHBoxLayout" name="horizontalLayout" stretch="9,2,2,2,2">
             <item>
              <widget class="QLineEdit" name="lineEdit">
               <property name="minimumSize">

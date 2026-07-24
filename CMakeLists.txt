@@ -19,7 +19,7 @@ elseif(WIN32 AND NOT NIGHTLY_RELEASE)
 elseif(APPLE)
     set(CMAKE_PREFIX_PATH "/Users/jiahang/Qt/6.7.3/macos/lib/cmake/")
 elseif(NIGHTLY_RELEASE)
-    set(CMAKE_PREFIX_PATH "C:/Qt/6.7.3/msvc2022_64/lib/cmake")
+    set(CMAKE_PREFIX_PATH "C:/Qt/6.9.3/msvc2022_64/lib/cmake")
 endif()
 
 if (UNIX AND NOT APPLE)
