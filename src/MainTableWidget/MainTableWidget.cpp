@@ -114,12 +114,6 @@ void MainTableWidget::showStatus(QString str)
         statusMsgAnimation->start();
     });
 }
-void MainTableWidget::on_getTimer(int &m,int &s)
-{
-    m = minTime;
-    s = secTime;
-}
-
 void MainTableWidget::initAnimation()
 {
     QScreen *screen = qApp->primaryScreen();
@@ -224,16 +218,6 @@ void MainTableWidget::initSignal(){
     },Qt::QueuedConnection);
     connect(refetchThread,&RefetchTableThread::initMainWindowAnimation,this,&MainTableWidget::initAnimation,Qt::QueuedConnection);
     connect(ui->hide_window,&QPushButton::clicked,this,&MainTableWidget::on_hideWindow);
-    connect(refetchThread, &RefetchTableThread::windowTop, this, [=] {
-        // SetWindowPos(HWND(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-            // if (IsWindowFullyCovered(HWND(winId())))
-            // {
-            //     qDebug() << "up";
-            //     SetWindowPos(HWND(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-            // }
-    }, Qt::QueuedConnection);
-    connect(refetchThread, &RefetchTableThread::getWidth, this,&MainTableWidget::onGetWidth, Qt::BlockingQueuedConnection);
-
 }
 void MainTableWidget::readTimeTable(){
     auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
@@ -270,7 +254,6 @@ void RefetchTableThread::run(){
     QJsonObject nullClass = { {"start","00:00"},{"end","00:00"} };
     for(int idx = 0;idx < todayTable.count();)
     {
-        // emit windowTop();
         if (stopFlag) {
             stopFlag = false;
             return;
@@ -279,14 +262,10 @@ void RefetchTableThread::run(){
         QDate today = QDate::currentDate();
         QDateTime currentDateTime = QDateTime::currentDateTime();
         QJsonObject currentClass = todayTable[idx].toObject();
-        QJsonObject prevClass = idx > 0 ? todayTable[idx - 1].toObject() : nullClass;
         QJsonObject nextClass = idx < todayTable.count() - 1 ? todayTable[idx + 1].toObject() : nullClass;
         QDateTime currentClassStartTime = getTodayTime(currentClass.value("start").toString(), today);
         QDateTime currentClassEndTime = getTodayTime(currentClass.value("end").toString(), today);
-        QDateTime prevClassStartTime = getTodayTime(prevClass.value("start").toString(), today);
-        QDateTime prevClassEndTime = getTodayTime(prevClass.value("end").toString(), today);
         QDateTime nextClassStartTime = getTodayTime(nextClass.value("start").toString(), today);
-        QDateTime nextClassEndTime = getTodayTime(nextClass.value("end").toString(), today);
         if (currentDateTime.secsTo(currentClassEndTime)> 0) { // 当前时间 - 当前课程下课时间 >= 0 (上课中)
             if (idx > 0) emit setClassStyleSheet(idx - 1, "color: black;"); //去除上一节课的边框
             emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:#1191d3; border-style: solid; color: black;");
@@ -337,10 +316,6 @@ void RefetchTableThread::run(){
             }
             idx++; //下一节课
         }
-        else {
-            idx++; //下一节课
-        }
-        
     }
     emit changeStackedIndex(0);
     emit toDone();

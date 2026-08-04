@@ -93,6 +93,11 @@ void AppendixTableManager::writeAppendixTables() {
 }
 
 void AppendixTableManager::editAppendTables() {
+    if (!ui->list_appendTable->currentItem())
+    {
+        QMessageBox::critical(this,"错误","没有选中课表！");
+        return;
+    }
     QString editTableName = ui->list_appendTable->currentItem()->text();
     emit editAppendixTable(editTableName);
     close();

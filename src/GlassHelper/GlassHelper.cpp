@@ -2,16 +2,8 @@
 #include <QWidget>
 #include <QDebug>
 #include <QPainter>
-#include <QPixmap>
-#include <QApplication>
-#include <QScreen>
-#include <QLabel>
-#include <QTimer>
-#include <QImage>
-#include <QDebug>
-#include <cmath>
+#include <QSysInfo>
 #include <qguiapplication.h>
-#include <QWindow>
 #ifdef __linux__
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -126,9 +118,8 @@ void GlassHelper::enableBlurBehindWin32(QWidget* widget,int alpha) {
         SetWindowCompositionAttribute(hWnd, &data);
     }
     else {
-        widget->setStyleSheet("background: rgba(255,255,0.7)");
+        widget->setStyleSheet("background: rgba(255,255,255,0.7)");
     }
 
 }
 #endif
-

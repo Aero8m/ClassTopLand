@@ -8,9 +8,6 @@
 #include <QWidget>
 #include<QTimer>
 #include<QJsonObject>
-#include<QJsonArray>
-#include<QJsonDocument>
-#include<QFile>
 #include<QDir>
 #include<QFont>
 #include<qfontdatabase.h>

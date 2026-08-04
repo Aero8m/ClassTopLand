@@ -3,15 +3,12 @@
 
 #include <QLabel>
 #include<QMouseEvent>
-#include <QToolTip>
 #include<QPropertyAnimation>
 class ClickLabel : public QLabel
 {
     Q_OBJECT
 public:
     ClickLabel(QWidget* parent=nullptr);
-    virtual void mouseClickEvent(QMouseEvent* e);
-    virtual void mouseDoubleClickEvent(QMouseEvent* e);
     virtual bool event(QEvent *e);
     QPropertyAnimation* resizeAnimation;
     bool animationConfigured = false;

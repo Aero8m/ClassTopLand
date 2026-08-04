@@ -1,12 +1,7 @@
 #pragma once
 
 #include <QWidget>
-#include "ui_ExportAPISettingsTab.h"
-#include "../CloudAPI.h"
 #include "../NetworkRequests/NetworkRequests.h"
-#include "../AppLog/AppLog.h"
-#include<QMessageBox>
-#include<QDir>
 QT_BEGIN_NAMESPACE
 namespace Ui { class ExportAPISettingsTabClass; };
 QT_END_NAMESPACE

@@ -1,4 +1,9 @@
 #include "ExportAPISettingsTab.h"
+#include "ui_ExportAPISettingsTab.h"
+#include "../CloudAPI.h"
+#include <QMessageBox>
+#include <QDir>
+#include <QJsonArray>
 
 ExportAPISettingsTab::ExportAPISettingsTab(QWidget *parent)
 	: QWidget(parent)
@@ -24,7 +29,7 @@ void ExportAPISettingsTab::initAPIList() {
 	}
 	apiListReq = new NetworkRequests(GET,CloudAPIUrl::GET_EXAPI_LIST);
 	apiListReq->start();
-	connect(apiListReq, &NetworkRequests::finished, this, [this](QJsonObject json, QString replyString, QString errorString) {
+	connect(apiListReq, &NetworkRequests::finished, this, [this](QJsonObject json, QString, QString errorString) {
 		if (!errorString.isEmpty())
 		{
 			QMessageBox::critical(this, "错误", "请求失败！");
@@ -59,7 +64,7 @@ void ExportAPISettingsTab::SyncExAPITable() {
         {"username",ui->APIUser->text()},
         {"password",ui->APIPwd->text()}
     });
-    connect(exApiTokenReq, &NetworkRequests::finished, this, [this,apiId](QJsonObject json, QString replyString, QString errorString) {
+    connect(exApiTokenReq, &NetworkRequests::finished, this, [this,apiId](QJsonObject json, QString, QString errorString) {
         if (!errorString.isEmpty())
         {
             QMessageBox::critical(this, "错误", "请求失败！");
@@ -73,8 +78,7 @@ void ExportAPISettingsTab::SyncExAPITable() {
         exApiTableReq->start(QJsonObject{
             {"token",token}
         });
-		connect(exApiTableReq, &NetworkRequests::finished, this, [this](QJsonObject json, QString replyString, QString errorString) {
-			Q_UNUSED(json);
+		connect(exApiTableReq, &NetworkRequests::finished, this, [this](QJsonObject, QString replyString, QString errorString) {
 			if (!errorString.isEmpty())
 			{
 				QMessageBox::critical(this, "错误", "请求失败！");

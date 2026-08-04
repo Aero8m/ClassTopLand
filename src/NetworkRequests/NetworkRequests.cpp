@@ -77,7 +77,6 @@ void NetworkRequests::readJson(QByteArray data)
     {
         json = document.object();
     }
-    isFinished = true;
     emit finished(json,replyString,errorString);
 }
 void NetworkRequests::start(QJsonObject data, QJsonObject headers, QJsonObject cookie, QString ua)
@@ -90,13 +89,4 @@ void NetworkRequests::start(QJsonObject data, QJsonObject headers, QJsonObject c
     {
         post(reqUrl,data,headers,cookie,ua);
     }
-}
-void NetworkRequests::operator=(const NetworkRequests &other)
-{
-    json = other.json;
-    replyString = other.replyString;
-    reqType = other.reqType;
-    reqUrl = other.reqUrl;
-    errorString = other.errorString;
-    isFinished = other.isFinished;
 }

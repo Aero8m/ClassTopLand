@@ -56,11 +56,9 @@ TableEditWidget::TableEditWidget(QWidget *parent)
     connect(ui->save_text_config,&QPushButton::clicked,this,&TableEditWidget::on_timerInfo_changed);
     connect(ui->start_table_manager,&QPushButton::clicked,this,&TableEditWidget::on_show_AppendixTableManager);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    this->installEventFilter(this);
     ui->label_4->setText("Build " + QString(APP_VERSION));
     connect(ui->tableWidget, &QTableWidget::cellChanged, this, &TableEditWidget::on_cellChanged);
     ui->tabWidget->setTabPosition(QTabWidget::West);
-    //ui->tabWidget->tabBar()->setStyle(new CustomTabStyle);
 }
 
 TableEditWidget::~TableEditWidget()
@@ -68,12 +66,7 @@ TableEditWidget::~TableEditWidget()
 
     delete ui;
 }
-bool TableEditWidget::timesort(QJsonObject &obj1, QJsonObject &obj2){
-    QTime time1 = QTime::fromString(obj1.value("start").toString());
-    QTime time2 = QTime::fromString(obj2.value("start").toString());
-    return time1 < time2;
-}
-void TableEditWidget::showEvent(QShowEvent* event){
+void TableEditWidget::showEvent(QShowEvent*){
     toggleded();
 }
 void TableEditWidget::closeEvent(QCloseEvent *event){
@@ -100,7 +93,7 @@ void TableEditWidget::on_editAppendixTable(QString tableName) {
 void TableEditWidget::setConfig(QJsonObject obj){
     configJson=obj;
     ui->timer_hide->setChecked(configJson.value("disable_timer").toBool());
-    ui->timer_time->setDateTime(QDateTime::fromString(configJson["endTime"].toString(),"yyyy-MM-dd hh:mm:ss"));
+    ui->timer_time->setDateTime(QDateTime::fromString(configJson["end_time"].toString(),"yyyy-MM-dd hh:mm:ss"));
     ui->edit_name->setText(configJson["label_tag"].toString());
     ui->edit_name_eng->setText(configJson["english_tag"].toString());
 }
@@ -285,6 +278,7 @@ void TableEditWidget::on_deleteButton_clicked()
     if (ui->tableWidget->currentRow() == -1)
     {
         QMessageBox::critical(this,"错误","未选择项！请选择一行删除");
+        return;
     }
     if (isEditAppendixTable){
         editArray = timeTableJson["appendixTables"][key].toArray();
@@ -311,19 +305,6 @@ void TableEditWidget::on_deleteButton_clicked()
         toggleded();
     }
 }
-
-void TableEditWidget::saveBoolConfig(const QString &key, bool value)
-{
-    configJson[key] = value;
-    QFile configFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    configFile.open(QFile::WriteOnly);
-    QJsonDocument tempDoc;
-    tempDoc.setObject(configJson);
-    configFile.write(tempDoc.toJson(QJsonDocument::Indented));
-    configFile.close();
-    QMessageBox::information(this, tr("提示"), tr("重启生效"));
-}
-
 
 void TableEditWidget::on_cellChanged(int row, int column) {
     ui->tableWidget->blockSignals(true);

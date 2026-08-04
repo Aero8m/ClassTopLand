@@ -1,15 +1,8 @@
 #include "./ClickLabel.h"
 
-ClickLabel::ClickLabel(QWidget* parent) {
-
-}
-void ClickLabel::mouseClickEvent(QMouseEvent* e){
-    setWindowFlags(Qt::Widget);
-    emit clicked();
-}
-void ClickLabel::mouseDoubleClickEvent(QMouseEvent* e){
-    setWindowFlags(Qt::Widget);
-    emit DoubleClicked();
+ClickLabel::ClickLabel(QWidget* parent)
+    : QLabel(parent)
+{
 }
 bool ClickLabel::event(QEvent *e)
 {

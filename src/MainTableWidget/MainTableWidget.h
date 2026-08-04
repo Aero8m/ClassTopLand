@@ -6,28 +6,17 @@
 #include<QJsonDocument>
 #include<QJsonArray>
 #include<QJsonValue>
-#include<QJsonParseError>
-#include<QMessageBox>
 #include <QTimer>
 #include<QThread>
 #include<QPropertyAnimation>
 #include<QEasingCurve>
-#include<QAbstractAnimation>
 #include<QRect>
 #include<QAbstractAnimation>
-#include<QNetworkAccessManager>
-#include<QNetworkReply>
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <QAction>
 #include<QHBoxLayout>
-#include<QProcess>
-#include <QCloseEvent>
 #include "../TableEditWidget/TableEditWidget.h"
-#include"../NetworkRequests/NetworkRequests.h"
-#include<QTranslator>
-#include"../AppLog/AppLog.h"
-#include<QTimerEvent>
 #include <QList>
 #include"../GlassHelper/GlassHelper.h"
 #ifdef WIN32
@@ -48,23 +37,12 @@ public:
     QDateTime getTodayTime(QString str, QDate date = QDate::currentDate());
 
     void run();
-    bool canShow(QString text) {
-        QFont ft("Microsoft YaHei UI",18);// 获取当前字体的格式，里面有文本大小和文本像素大小
-        QFontMetrics fm(ft); // 以当前的字体格式为基础
-        int textWidthPixel = fm.horizontalAdvance(text); //以当前的字体格式为基础,计算字体的像素宽度
-        if (textWidthPixel > emit getWidth() - 60) {
-            return false;
-        }
-        return true;
-    }
     void setTodayTable(QJsonArray today_table)
     {
         todayTable = today_table;
     }
     bool stopFlag = false;
 signals:
-    void setTable(QString str);
-    void repaint();
     void tst(QString text);
     void showStatusMessage(QString str);
     void showStatusMessageAS(QList<QString> strList);
@@ -73,8 +51,6 @@ signals:
     void setClassStyleSheet(int idx,QString styleSheet);
     void toDone();
     void initMainWindowAnimation();
-    void windowTop();
-    int getWidth();
 private:
     QJsonArray todayTable;
 };
@@ -83,7 +59,6 @@ class MainTableWidget : public QWidget
     Q_OBJECT
 
 public:
-    bool todoIsOpen = false;
     MainTableWidget(QWidget *parent = nullptr);
     ~MainTableWidget();
     void readTimeTable();
@@ -98,17 +73,10 @@ public:
     QAction *exitAppAction;
     QAction *huanKeAction;
     QSystemTrayIcon *sysTrayIcon; //系统托盘
-    bool zuanYanIsOpen = false;
-    bool todoIsOpenInBack = false;
     RefetchTableThread* refetchThread;
-    QString getToken();
     QPropertyAnimation* statusMsgAnimation;
     QPropertyAnimation* hideAnimation;
-    QAction* showMainAction;
     QJsonObject config;
-    bool isHidden = false;
-    int flag = 0;
-    NetworkRequests networkReq;
 
 public slots:
     void refetchTableSlot();
@@ -116,28 +84,17 @@ public slots:
     void showStatus(QString str);
     void showStatusAutoSelect(QList<QString> strList);
     void initAnimation();
-    int onGetWidth() {
-        return width();
-    };
 private slots:
     void on_showMainAction();
     void on_exitAppAction();
     void on_hideWindow();
-    void on_getTimer(int &m,int &s);
-
-signals:
-    void reText();
 private:
     Ui::MainTableWidget *ui;
     void initSysTrayIcon();
     void initSignal();
     void initUi();
-    bool timerStart = false;
     QHBoxLayout* classShowWidgetLayout;
     bool windowHidden = false;
-    int timerId;
-    qint64 minTime = 0;
-    qint64 secTime = 0;
     QTimer* topTimer;
     bool isFinished = false;
     QJsonObject timeTable;

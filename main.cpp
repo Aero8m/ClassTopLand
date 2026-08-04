@@ -2,13 +2,7 @@
 #include"./src/DayTimerWidget/DayTimerWidget.h"
 #include <QApplication>
 #include <QStyleHints>
-#include <QLocale>
-#include <QTranslator>
 #include<QDir>
-#include<QDateTime>
-#include<QProcess>
-#include<QFontDatabase>
-#include<QStyleFactory>
 #include <iostream>
 
 
@@ -68,7 +62,6 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
 #endif
-    //QApplication::setAttribute(Qt::AA_SetPlatformPlugin, QVariant("xcb"));
     printLogo();
 
     createFolder(QDir::homePath() + "/ClassTopLand_Data");
@@ -99,7 +92,6 @@ int main(int argc, char *argv[])
     QScreen *screen = a.primaryScreen();
     int screenWidth = screen->size().width();
     int screenHeight = screen->size().height();
-    // mainWidget->move((screenWidth - mainWidget->width()) / 2, 0);
     mainWidget->show();
     DayTimerWidget *dayTimerWidget = new DayTimerWidget();
     dayTimerWidget->move((screenWidth - dayTimerWidget->width()),(screenHeight - dayTimerWidget->height()) * 0.95);
