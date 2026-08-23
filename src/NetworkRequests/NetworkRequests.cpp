@@ -8,27 +8,13 @@ NetworkRequests::NetworkRequests(RequestType type,QUrl url)
     reqType = type;
     reqUrl = url;
     manager = new QNetworkAccessManager(this);
+    connect(manager, &QNetworkAccessManager::finished,
+            this, &NetworkRequests::handleReply);
 }
 void NetworkRequests::get(QUrl url)
 {
     QNetworkRequest request;
     request.setUrl(url);
-    connect(manager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
-    {
-        showLog(QString("Status Code:%1").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()),INFO);
-        if (reply->error())
-        {
-            showLog("Request Error" + reply->errorString(),ERR);
-            errorString = reply->errorString();
-        }else
-        {
-            showLog(QString("Request ok, Reading..."),INFO);
-            QByteArray data = reply->readAll();
-            replyString = QString::fromUtf8(data);
-            readJson(data);
-        }
-        reply->deleteLater();
-    });
     manager->get(request);
 
 }
@@ -49,38 +35,57 @@ void NetworkRequests::post(QUrl url,QJsonObject data,QJsonObject headers,QJsonOb
     }
     request.setRawHeader("User-Agent",ua.toUtf8());
     request.setUrl(url);
-    connect(manager,&QNetworkAccessManager::finished,this,[=, this](QNetworkReply *reply)
-    {
-        if (reply->error())
-        {
-            showLog(QString("Request Error %1：").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()) + reply->errorString(),ERR);
-            errorString = reply->errorString();
-        }else
-        {
-            showLog(QString("Request %1 ok, Reading...").arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
-            QByteArray data = reply->readAll();
-            replyString = QString::fromUtf8(data);
-            readJson(data);
-        }
-        reply->deleteLater();
-    });
     manager->post(request, QJsonDocument(data).toJson());
 }
+
+void NetworkRequests::handleReply(QNetworkReply *reply)
+{
+    const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QByteArray data = reply->readAll();
+    replyString = QString::fromUtf8(data);
+
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        errorString = QString("HTTP %1: %2").arg(statusCode).arg(reply->errorString());
+        showLog("Request Error: " + errorString, ERR);
+        emit finished({}, replyString, errorString);
+        reply->deleteLater();
+        return;
+    }
+
+    showLog(QString("Request %1 ok, Reading...").arg(statusCode), INFO);
+    readJson(data);
+    reply->deleteLater();
+}
+
 void NetworkRequests::readJson(QByteArray data)
 {
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(data,&error);
-    if(document.isNull())
+    if (error.error != QJsonParseError::NoError || document.isNull())
     {
-        showLog(QString("JSON Parse Error" + error.errorString()));
-    }else
+        errorString = "JSON Parse Error: " + error.errorString();
+        json = {};
+        showLog(errorString, ERR);
+    }
+    else if (!document.isObject())
     {
+        errorString = "JSON Parse Error: response root is not an object";
+        json = {};
+        showLog(errorString, ERR);
+    }
+    else
+    {
+        errorString.clear();
         json = document.object();
     }
     emit finished(json,replyString,errorString);
 }
 void NetworkRequests::start(QJsonObject data, QJsonObject headers, QJsonObject cookie, QString ua)
 {
+    json = {};
+    replyString.clear();
+    errorString.clear();
     if (reqType == RequestType::GET)
     {
         get(reqUrl);

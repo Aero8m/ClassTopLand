@@ -1,5 +1,45 @@
 #include "./TableEditWidget.h"
 #include "ui_TableEditWidget.h"
+#include <QRegularExpression>
+#include <QSignalBlocker>
+
+namespace {
+QTime parseClassTime(const QString &text)
+{
+    static const QRegularExpression timePattern(
+        QStringLiteral(R"(^([01]?\d|2[0-3]):([0-5]\d)$)"));
+    const QRegularExpressionMatch match = timePattern.match(text.trimmed());
+    if (!match.hasMatch())
+    {
+        return {};
+    }
+    return QTime(match.captured(1).toInt(), match.captured(2).toInt());
+}
+
+void sortClassesByStartTime(QJsonArray &classes)
+{
+    for (qsizetype i = 0; i + 1 < classes.size(); ++i)
+    {
+        qsizetype earliestIndex = i;
+        QTime earliestTime = parseClassTime(classes[i].toObject()["start"].toString());
+        for (qsizetype j = i + 1; j < classes.size(); ++j)
+        {
+            const QTime candidateTime = parseClassTime(classes[j].toObject()["start"].toString());
+            if (candidateTime.isValid() && (!earliestTime.isValid() || candidateTime < earliestTime))
+            {
+                earliestIndex = j;
+                earliestTime = candidateTime;
+            }
+        }
+        if (earliestIndex != i)
+        {
+            const QJsonValue currentValue = classes[i];
+            classes[i] = classes[earliestIndex];
+            classes[earliestIndex] = currentValue;
+        }
+    }
+}
+}
 
 
 TableEditWidget::TableEditWidget(QWidget *parent)
@@ -67,6 +107,7 @@ TableEditWidget::~TableEditWidget()
     delete ui;
 }
 void TableEditWidget::showEvent(QShowEvent*){
+    readTableJson();
     toggleded();
 }
 void TableEditWidget::closeEvent(QCloseEvent *event){
@@ -84,6 +125,7 @@ void TableEditWidget::on_show_AppendixTableManager() {
 }
 
 void TableEditWidget::on_editAppendixTable(QString tableName) {
+    readTableJson();
     ui->radioButton_6->setChecked(true);
     isEditAppendixTable = true;
     currentEditAppendixTableName = tableName;
@@ -119,22 +161,21 @@ void TableEditWidget::readTableJson(){
     timeTableJson = *result;
 }
 void TableEditWidget::refechTableWidget(QJsonArray todayTable){
-
+    const QSignalBlocker blocker(ui->tableWidget);
     ui->tableWidget->clear();
-    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "课程" << "上课时间" << "下课时间" << "课间时间");
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "课程" << "上课时间" << "下课时间");
     ui->tableWidget->setRowCount(todayTable.count());
     for (int x = 0; x<todayTable.count();x++){
         QJsonObject valueObject = todayTable.at(x).toObject();
         QString name = valueObject.value("name").toString();
         QString startTime = valueObject.value("start").toString();
         QString endTime = valueObject.value("end").toString();
-        int splitTime = valueObject.value("split").toInt();
         ui->tableWidget->setItem(x,0,new QTableWidgetItem(name));
         ui->tableWidget->setItem(x,1,new QTableWidgetItem(startTime));
         ui->tableWidget->setItem(x,2,new QTableWidgetItem(endTime));
-        ui->tableWidget->setItem(x,3,new QTableWidgetItem(QString::number(splitTime)));
     }
 }
+
 void TableEditWidget::toggleded(){
 
     if (ui->radioButton->isChecked()){
@@ -164,6 +205,9 @@ void TableEditWidget::toggleded(){
     if (ui->radioButton_8->isChecked()){
         isEditAppendixTable = false;
         refechTableWidget(timeTableJson.value("Sun").toArray());
+    }else
+    if (ui->radioButton_6->isChecked() && isEditAppendixTable){
+        refechTableWidget(timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray());
     }
 }
 void TableEditWidget::addItem(QString key){
@@ -172,6 +216,7 @@ void TableEditWidget::addItem(QString key){
         QMessageBox::critical(this,"错误","请输入课程名称");
         return;
     }
+    readTableJson();
     QJsonObject insertJson;
     insertJson.insert("name",ui->lineEdit->text());
     insertJson.insert("start",ui->timeEdit->text());
@@ -183,19 +228,7 @@ void TableEditWidget::addItem(QString key){
         editArray = timeTableJson[key].toArray();
     }
     editArray.append(insertJson);
-    for (int i = 0; i < editArray.count() - 1; i++) {
-        int index = i;	// 赋初值给索引
-        for (int j = i + 1; j < editArray.count(); j++) {
-            if (getTodayTime(editArray[j].toObject().value("start").toString()) < getTodayTime(editArray[index].toObject().value("start").toString())) {	// 当剩余的数据有比索引对应的数小时，更新索引
-                index = j;
-            }
-        }
-        if (index != i) {
-            QJsonObject temp = editArray[index].toObject();
-            editArray[index] = editArray[i];
-            editArray[i] = temp;
-        }
-    }
+    sortClassesByStartTime(editArray);
     if (isEditAppendixTable){
         QJsonObject appendixTablesObj = timeTableJson["appendixTables"].toObject();
         appendixTablesObj[key] = editArray;
@@ -280,6 +313,7 @@ void TableEditWidget::on_deleteButton_clicked()
         QMessageBox::critical(this,"错误","未选择项！请选择一行删除");
         return;
     }
+    readTableJson();
     if (isEditAppendixTable){
         editArray = timeTableJson["appendixTables"][key].toArray();
     }else{
@@ -307,7 +341,8 @@ void TableEditWidget::on_deleteButton_clicked()
 }
 
 void TableEditWidget::on_cellChanged(int row, int column) {
-    ui->tableWidget->blockSignals(true);
+    const QSignalBlocker blocker(ui->tableWidget);
+    readTableJson();
     QJsonArray currentTable;
     QString currentTableName;
     if (ui->radioButton->isChecked()) {
@@ -342,31 +377,68 @@ void TableEditWidget::on_cellChanged(int row, int column) {
         currentTable = timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray();
         currentTableName =  currentEditAppendixTableName;
     }
+
+    QTableWidgetItem *editedItem = ui->tableWidget->item(row, column);
+    if (currentTableName.isEmpty() || row < 0 || row >= currentTable.size() || !editedItem)
+    {
+        return;
+    }
+
+    QJsonObject currentClass = currentTable[row].toObject();
+    const QString editedText = editedItem->text().trimmed();
+    auto rejectEdit = [this, editedItem](const QString &message, const QString &oldValue)
+    {
+        editedItem->setText(oldValue);
+        QMessageBox::critical(this, "错误", message);
+    };
+
     switch (column) {
         case 0: {
-            QJsonObject currentClass = currentTable[row].toObject();
-            currentClass["name"] = ui->tableWidget->item(row, column)->text();
+            if (editedText.isEmpty())
+            {
+                rejectEdit("课程名称不能为空！", currentClass["name"].toString());
+                return;
+            }
+            currentClass["name"] = editedText;
             currentTable[row] = currentClass;
             break;
         }
         case 1: {
-            QJsonObject currentClass = currentTable[row].toObject();
-            currentClass["start"] = ui->tableWidget->item(row, column)->text();
+            const QTime startTime = parseClassTime(editedText);
+            const QTime endTime = parseClassTime(currentClass["end"].toString());
+            if (!startTime.isValid() || (endTime.isValid() && startTime >= endTime))
+            {
+                rejectEdit("上课时间格式应为 HH:mm，且必须早于下课时间！",
+                           currentClass["start"].toString());
+                return;
+            }
+            const QString normalizedTime = startTime.toString("HH:mm");
+            editedItem->setText(normalizedTime);
+            currentClass["start"] = normalizedTime;
             currentTable[row] = currentClass;
             break;
         }
         case 2: {
-            QJsonObject currentClass = currentTable[row].toObject();
-            currentClass["end"] = ui->tableWidget->item(row, column)->text();
+            const QTime startTime = parseClassTime(currentClass["start"].toString());
+            const QTime endTime = parseClassTime(editedText);
+            if (!endTime.isValid() || (startTime.isValid() && endTime <= startTime))
+            {
+                rejectEdit("下课时间格式应为 HH:mm，且必须晚于上课时间！",
+                           currentClass["end"].toString());
+                return;
+            }
+            const QString normalizedTime = endTime.toString("HH:mm");
+            editedItem->setText(normalizedTime);
+            currentClass["end"] = normalizedTime;
             currentTable[row] = currentClass;
             break;
         }
-        case 3: {
-            QJsonObject currentClass = currentTable[row].toObject();
-            currentClass["split"] = ui->tableWidget->item(row, column)->text();
-            currentTable[row] = currentClass;
-            break;
-        }
+        default:
+            return;
+    }
+    if (column == 1)
+    {
+        sortClassesByStartTime(currentTable);
     }
     if (!isEditAppendixTable) {
         timeTableJson[currentTableName] = currentTable;
@@ -388,5 +460,4 @@ void TableEditWidget::on_cellChanged(int row, int column) {
     else {
         toggleded();
     }
-    ui->tableWidget->blockSignals(false);
 }

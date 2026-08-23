@@ -47,7 +47,7 @@
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">background:#1191d3;</string>
+      <string notr="true">background: #f3f3f3;</string>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
@@ -58,7 +58,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: #fff</string>
+         <string notr="true">color: #000;</string>
         </property>
         <property name="text">
          <string>附加课表管理</string>

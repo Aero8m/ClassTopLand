@@ -92,7 +92,7 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QLabel" name="table_show">
+      <widget class="QLabel" name="done_tab_text">
        <property name="font">
         <font>
          <pointsize>14</pointsize>
@@ -102,7 +102,7 @@
         <string notr="true">color:#000000;</string>
        </property>
        <property name="text">
-        <string>今日的课程已上完</string>
+        <string>Loading...</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignmentFlag::AlignCenter</set>

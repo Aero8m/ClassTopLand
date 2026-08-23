@@ -26,6 +26,7 @@ class NetworkRequests : public QObject{
     QNetworkAccessManager *manager = nullptr;
     void get(QUrl url);
     void post(QUrl url,QJsonObject data,QJsonObject headers=QJsonObject(),QJsonObject cookie = QJsonObject(),QString ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0");
+    void handleReply(QNetworkReply *reply);
     void readJson(QByteArray data);
     signals:
     void finished(QJsonObject json, QString replyString, QString errorString);

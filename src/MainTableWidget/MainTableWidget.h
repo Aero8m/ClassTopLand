@@ -15,6 +15,7 @@
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <QAction>
+#include <QProcess>
 #include<QHBoxLayout>
 #include "../TableEditWidget/TableEditWidget.h"
 #include <QList>
@@ -37,11 +38,11 @@ public:
     QDateTime getTodayTime(QString str, QDate date = QDate::currentDate());
 
     void run();
-    void setTodayTable(QJsonArray today_table)
+    void setTodayTable(const QJsonArray &today_table)
     {
+        Q_ASSERT(!isRunning());
         todayTable = today_table;
     }
-    bool stopFlag = false;
 signals:
     void tst(QString text);
     void showStatusMessage(QString str);
@@ -50,6 +51,7 @@ signals:
     void addClass(QString text);
     void setClassStyleSheet(int idx,QString styleSheet);
     void toDone();
+    void setDoneTabText(QString text);
     void initMainWindowAnimation();
 private:
     QJsonArray todayTable;
@@ -61,6 +63,32 @@ class MainTableWidget : public QWidget
 public:
     MainTableWidget(QWidget *parent = nullptr);
     ~MainTableWidget();
+
+
+public slots:
+    void refetchTableSlot();
+    void huanKeSlot();
+    void showStatus(QString str);
+    void showStatusAutoSelect(QList<QString> strList);
+    void initAnimation();
+private slots:
+    void on_showMainAction();
+    void on_hideWindow();
+    void restartApplication();
+private:
+    Ui::MainTableWidget *ui;
+    void initSysTrayIcon();
+    void initSignal();
+    void initUi();
+    void stopRefetchThread();
+    QHBoxLayout* classShowWidgetLayout;
+    bool windowHidden = false;
+    QTimer* topTimer;
+    bool isFinished = false;
+    QJsonObject timeTable;
+    QJsonArray todayTable;
+    QTimer* restartTimer;
+    QDate runningDate;
     void readTimeTable();
     void readConfig();
     void initTodayTable();
@@ -72,33 +100,12 @@ public:
     QAction *showEditAction;
     QAction *exitAppAction;
     QAction *huanKeAction;
+    QAction* restartAppAction;
     QSystemTrayIcon *sysTrayIcon; //系统托盘
     RefetchTableThread* refetchThread;
     QPropertyAnimation* statusMsgAnimation;
     QPropertyAnimation* hideAnimation;
     QJsonObject config;
-
-public slots:
-    void refetchTableSlot();
-    void huanKeSlot();
-    void showStatus(QString str);
-    void showStatusAutoSelect(QList<QString> strList);
-    void initAnimation();
-private slots:
-    void on_showMainAction();
-    void on_exitAppAction();
-    void on_hideWindow();
-private:
-    Ui::MainTableWidget *ui;
-    void initSysTrayIcon();
-    void initSignal();
-    void initUi();
-    QHBoxLayout* classShowWidgetLayout;
-    bool windowHidden = false;
-    QTimer* topTimer;
-    bool isFinished = false;
-    QJsonObject timeTable;
-    QJsonArray todayTable;
 
     static constexpr int SIDEBAR_WIDTH = 154;
     static constexpr int CLASS_BLOCK_SIZE = 49;

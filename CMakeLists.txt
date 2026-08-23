@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 project(ClassTopLand)
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_AUTOMOC ON)         # 自动调用 moc
-set(CMAKE_AUTORCC ON)         # 自动调用 rcc
-set(CMAKE_AUTOUIC ON)         # 自动调用 uic
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(MSVC)
@@ -16,7 +16,6 @@ endif()
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
-# 设置 Qt 的查找路径（可选）
 if(NOT CMAKE_PREFIX_PATH)
     if (UNIX AND NOT APPLE)
         set(CMAKE_PREFIX_PATH "/home/jiahang/Qt/6.7.3/gcc_64/lib/cmake/")
@@ -39,8 +38,6 @@ find_package(Qt6 COMPONENTS
         REQUIRED
 )
 
-
-# 收集 src 及其子目录中的源文件
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/*.cpp" "src/*.h" "src/*.ui")
 set(RESOURCE_FILES res.qrc resource.rc)
 
@@ -53,8 +50,6 @@ qt_add_executable(
         ${SOURCE_FILES}
         ${RESOURCE_FILES}
 )
-# 创建可执行文件（会自动处理 .ui/.qrc）
-
 set_target_properties(ClassTopLand PROPERTIES
         WIN32_EXECUTABLE TRUE
         MACOSX_BUNDLE TRUE
@@ -86,6 +81,3 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Network
 )
 
-
-# 如果你需要显式包含某些目录（比如头文件放在 include/ 中），可以加上：
-# include_directories(include)

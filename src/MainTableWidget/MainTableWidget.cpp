@@ -2,6 +2,8 @@
 #include "ui_MainTableWidget.h"
 #include "../Utils/Utils.h"
 
+
+
 void asyncSleep(unsigned int msec)
 {
     QEventLoop loop;
@@ -17,6 +19,8 @@ MainTableWidget::MainTableWidget(QWidget *parent)
     ui->setupUi(this);
     editWindow = new TableEditWidget();
     refetchThread = new RefetchTableThread();
+    connect(qApp, &QCoreApplication::aboutToQuit,
+            this, &MainTableWidget::stopRefetchThread);
     readConfig();
     readTimeTable();
     
@@ -38,16 +42,21 @@ MainTableWidget::MainTableWidget(QWidget *parent)
     refetchThread->start();
     initSysTrayIcon();
 
+    runningDate = QDate::currentDate();
+    restartTimer = new QTimer(this);
+    connect(restartTimer, &QTimer::timeout, this, [this] {
+        if (QDate::currentDate() != runningDate) {
+            restartApplication();
+        }
+    });
+
+    restartTimer->start(1000);
 }
 
 MainTableWidget::~MainTableWidget()
 {
     if (refetchThread) {
-        refetchThread->stopFlag = true;
-        if (!refetchThread->wait(3000)) {
-            refetchThread->terminate();
-            refetchThread->wait();
-        }
+        stopRefetchThread();
         delete refetchThread;
     }
     if (topTimer) {
@@ -59,6 +68,36 @@ MainTableWidget::~MainTableWidget()
     }
     delete ui;
 }
+
+void MainTableWidget::stopRefetchThread()
+{
+    if (!refetchThread || !refetchThread->isRunning())
+    {
+        return;
+    }
+
+    refetchThread->requestInterruption();
+    refetchThread->wait();
+}
+
+void MainTableWidget::restartApplication()
+{
+    const QString program = QCoreApplication::applicationFilePath();
+    QStringList arguments = QCoreApplication::arguments();
+    if (!arguments.isEmpty()) {
+        arguments.removeFirst();
+    }
+
+    const bool started = QProcess::startDetached(
+        program,
+        arguments,
+        QCoreApplication::applicationDirPath()
+    );
+    if (started) {
+        qApp->quit();
+    }
+}
+
 void MainTableWidget::showStatusAutoSelect(QList<QString> strList)
 {
     if (strList.isEmpty())
@@ -218,6 +257,10 @@ void MainTableWidget::initSignal(){
     },Qt::QueuedConnection);
     connect(refetchThread,&RefetchTableThread::initMainWindowAnimation,this,&MainTableWidget::initAnimation,Qt::QueuedConnection);
     connect(ui->hide_window,&QPushButton::clicked,this,&MainTableWidget::on_hideWindow);
+    connect(refetchThread,&RefetchTableThread::setDoneTabText,this,[this](const QString &text)
+    {
+        ui->done_tab_text->setText(text);
+    },Qt::QueuedConnection);
 }
 void MainTableWidget::readTimeTable(){
     auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/tables.json");
@@ -240,22 +283,43 @@ void MainTableWidget::initTodayTable(){
 }
 void RefetchTableThread::run(){
     bool classStarted = false;
+    if (isInterruptionRequested())
+    {
+        return;
+    }
     if (todayTable.count() <= 0)
     {
+        emit setDoneTabText("今天没有课程");
         emit changeStackedIndex(0);
+        emit initMainWindowAnimation();
+        emit toDone();
+        return;
     }
     for (int i=0;i<todayTable.count();i++)
     {
-        emit addClass(QString(todayTable[i].toObject()["name"].toString().at(0)));
+        if (isInterruptionRequested())
+        {
+            return;
+        }
+        emit addClass(todayTable[i].toObject()["name"].toString().trimmed().left(1));
     }
-    emit changeStackedIndex(1);
 
     emit initMainWindowAnimation();
     QJsonObject nullClass = { {"start","00:00"},{"end","00:00"} };
+    int requestedPage = -1;
+    QString lastDoneText;
+    auto switchPage = [this, &requestedPage](int page)
+    {
+        if (requestedPage != page)
+        {
+            emit changeStackedIndex(page);
+            requestedPage = page;
+        }
+    };
+
     for(int idx = 0;idx < todayTable.count();)
     {
-        if (stopFlag) {
-            stopFlag = false;
+        if (isInterruptionRequested()) {
             return;
         }
 
@@ -266,7 +330,21 @@ void RefetchTableThread::run(){
         QDateTime currentClassStartTime = getTodayTime(currentClass.value("start").toString(), today);
         QDateTime currentClassEndTime = getTodayTime(currentClass.value("end").toString(), today);
         QDateTime nextClassStartTime = getTodayTime(nextClass.value("start").toString(), today);
-        if (currentDateTime.secsTo(currentClassEndTime)> 0) { // 当前时间 - 当前课程下课时间 >= 0 (上课中)
+
+        switchPage(1);
+
+        if (idx == 0 && currentDateTime < currentClassStartTime) // 当前还没有上课
+        {
+            emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
+            int diffTime = currentDateTime.secsTo(currentClassStartTime);
+            int hour = diffTime / 3600;
+            diffTime = diffTime % 3600;
+            int min = diffTime / 60;
+            int sec = diffTime % 60;
+            QString displayString = QString("%1:%2:%3").arg(hour, 2, 10, QLatin1Char('0')).arg(min, 2, 10, QLatin1Char('0')).arg(sec, 2, 10, QLatin1Char('0'));
+            emit tst(displayString);
+            msleep(50);
+        } else if (currentDateTime < currentClassEndTime) { // 已到上课时间，且当前课程尚未结束
             if (idx > 0) emit setClassStyleSheet(idx - 1, "color: black;"); //去除上一节课的边框
             emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:#1191d3; border-style: solid; color: black;");
             if (currentDateTime.secsTo(currentClassStartTime) == 0 and !classStarted) {  // 当前时间 - 当前课程开始时间 == 0 (刚开始上课)
@@ -286,11 +364,10 @@ void RefetchTableThread::run(){
                 emit tst(displayString);
                 msleep(50);
             }
-        }
-        else if (currentDateTime.secsTo(currentClassEndTime) <= 0) { // 当前时间 - 当前课程下课时间 <= 0 (下课 or 不是这节课)
+        } else { // 当前课程已结束
             if (currentDateTime.secsTo(nextClassStartTime)> 0) { // 当前时间 - 下一节课开始时间 >= 0 (就是这节课，且正在下课时间)
                 emit setClassStyleSheet(idx, "color: black;"); //去除上一节课的边框
-                emit setClassStyleSheet(idx + 1, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
+            emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
                 if (currentDateTime.secsTo(currentClassEndTime) == 0 and classStarted) {
                     classStarted = false;
                     emit showStatusMessageAS({QString("%1 已经下课，请做好下节课上课准备").arg(currentClass["name"].toString()),
@@ -317,19 +394,32 @@ void RefetchTableThread::run(){
             idx++; //下一节课
         }
     }
-    emit changeStackedIndex(0);
+    emit setDoneTabText("今日的课程已上完");
+    switchPage(0);
     emit toDone();
     emit initMainWindowAnimation();
 
 }
 QDateTime RefetchTableThread::getTodayTime(QString str, QDate date){
     QStringList timeList = str.split(":");
-    int hour = timeList[0].toInt();
-    int minute = timeList[1].toInt();
+    if (timeList.size() != 2)
+    {
+        return {};
+    }
+
+    bool hourOk = false;
+    bool minuteOk = false;
+    int hour = timeList[0].toInt(&hourOk);
+    int minute = timeList[1].toInt(&minuteOk);
+    QTime time(hour, minute);
+    if (!hourOk || !minuteOk || !time.isValid())
+    {
+        return {};
+    }
 
     QDateTime dateTime;
     dateTime.setDate(date);
-    dateTime.setTime(QTime(hour, minute));
+    dateTime.setTime(time);
     return dateTime;
 }
 
@@ -352,12 +442,7 @@ void MainTableWidget::huanKeSlot(){
     QString cnDay = QInputDialog::getItem(nullptr,"换课","选择使用的星期或附加课表",items,0,false,&ok);
     if (!ok) return;
     QString day = enCnDay[cnDay];
-    refetchThread->stopFlag = true;
-    if (!refetchThread->wait(3000)) {
-        refetchThread->terminate();
-        refetchThread->wait();
-    }
-    refetchThread->stopFlag = false;
+    stopRefetchThread();
     isFinished = false;
     if (day.contains("APPEND_",Qt::CaseSensitive)){
         todayTable = timeTable["appendixTables"].toObject()[day.split("_").last()].toArray();
@@ -405,12 +490,12 @@ void MainTableWidget::initSysTrayIcon()
 void MainTableWidget::createActions(){
     showEditAction = new QAction(tr("设置"),this);
     connect(showEditAction, &QAction::triggered, this, &MainTableWidget::on_showMainAction);
-    // showMainAction = new QAction(tr("打开主界面"),this);
-    // connect(showMainAction,&QAction::triggered,this,&MainTableWidget::startMainWindow);
     exitAppAction = new QAction(tr("退出"),this);
-    connect(exitAppAction, &QAction::triggered, this, &MainTableWidget::on_exitAppAction);
+    connect(exitAppAction, &QAction::triggered, this, &QApplication::exit);
     huanKeAction = new QAction(tr("临时换课"),this);
     connect(huanKeAction,&QAction::triggered,this,&MainTableWidget::huanKeSlot);
+    restartAppAction = new QAction(tr("重启"),this);
+    connect(restartAppAction, &QAction::triggered, this, &MainTableWidget::restartApplication);
 
 }
 void MainTableWidget::createMenu(){
@@ -419,6 +504,7 @@ void MainTableWidget::createMenu(){
     trayMenu->addAction(showEditAction);
     trayMenu->addAction(huanKeAction);
     trayMenu->addSeparator();
+    trayMenu->addAction(restartAppAction);
     trayMenu->addAction(exitAppAction);
     sysTrayIcon->setContextMenu(trayMenu);
 }
@@ -426,16 +512,8 @@ void MainTableWidget::on_showMainAction(){
     editWindow->show();
 }
 
-void MainTableWidget::on_exitAppAction(){
-    qApp->quit();
-}
 void MainTableWidget::refetchTableSlot(){
-    refetchThread->stopFlag = true;
-    if (!refetchThread->wait(3000)) {
-        refetchThread->terminate();
-        refetchThread->wait();
-    }
-    refetchThread->stopFlag = false;
+    stopRefetchThread();
     readTimeTable();
     isFinished = false;
     for (QWidget*widget : ui->class_show_widget->findChildren<QWidget*>())
@@ -449,6 +527,7 @@ void MainTableWidget::refetchTableSlot(){
     if (windowHidden) on_hideWindow();
     sysTrayIcon->showMessage(tr("提示"),tr("配置已成功应用！"),QSystemTrayIcon::MessageIcon::Information,500);
 }
+
 
 
 void MainTableWidget::setStyleSheetFromFile(QWidget* widget,QString file){

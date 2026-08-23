@@ -8,6 +8,7 @@
 #include<QDir>
 #include<QCloseEvent>
 #include<QTableWidgetItem>
+#include<QTime>
 #include<QtGlobal>
 #include<QMessageBox>
 #include <qdesktopservices.h>
@@ -39,14 +40,6 @@ private:
     
     void closeEvent(QCloseEvent* event) override;
     void addItem(QString key);
-    QTime getTodayTime(QString str) {
-        QString timeString = str;
-        QStringList timeList = timeString.split(":");
-        int hour = timeList[0].toInt();
-        int minute = timeList[1].toInt();
-        return QTime(hour, minute);
-    }
-    
 public slots:
     void toggleded();
 private slots:

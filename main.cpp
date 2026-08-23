@@ -1,14 +1,13 @@
 #include "./src/MainTableWidget/MainTableWidget.h"
 #include"./src/DayTimerWidget/DayTimerWidget.h"
+#include"./src/AppLog/AppLog.h"
+#include"./src/NetworkRequests/NetworkRequests.h"
+#include "./src/Utils/Utils.h"
 #include <QApplication>
 #include <QStyleHints>
 #include<QDir>
 #include <iostream>
 
-
-#include"./src/AppLog/AppLog.h"
-#include"./src/NetworkRequests/NetworkRequests.h"
-#include "./src/Utils/Utils.h"
 bool timerIsOpen(){
     auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
     if (!result) return true;
@@ -45,19 +44,7 @@ void createFolder(const QString &folderPath) {
 int main(int argc, char *argv[])
 {
 #ifdef __linux__
-
-    // 插入 -platform xcb 参数
-    char *newArgv[argc + 2];
-    newArgv[0] = argv[0];
-    newArgv[1] = const_cast<char*>("-platform");
-    newArgv[2] = const_cast<char*>("xcb");
-
-    for (int i = 1; i < argc; ++i) {
-        newArgv[i + 2] = argv[i];
-    }
-
-    int newArgc = argc + 2;
-    QApplication a(newArgc, newArgv);
+    QApplication a(argc, argv);
 #else
     QApplication a(argc, argv);
     QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
@@ -74,14 +61,9 @@ int main(int argc, char *argv[])
 
 #ifdef __linux__
     QScreen *screen = QApplication::primaryScreen();
-    // 逻辑尺寸
-    QSize logicalSize = screen->size();  // 或 screen->availableSize()
-
-    // 物理尺寸（实际像素）
-    qreal ratio = screen->devicePixelRatio();
-    QSize physicalSize = logicalSize * ratio;
-    int screenWidth = physicalSize.width();
-    int screenHeight = physicalSize.height();
+    QSize logicalSize = screen->size();
+    int screenWidth = logicalSize.width();
+    int screenHeight = logicalSize.height();
     DayTimerWidget *dayTimerWidget = new DayTimerWidget();
     dayTimerWidget->move((screenWidth - dayTimerWidget->width()),(screenHeight - dayTimerWidget->height()) * 0.95);
     if (timerIsOpen()) {
