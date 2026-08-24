@@ -25,6 +25,7 @@ bool timerIsOpen(){
     showLog("Timer is Show",LogStatus::INFO);
     return true;
 }
+
 void printLogo() {
     QFile file(":/res/logo.txt");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -35,12 +36,14 @@ void printLogo() {
     std::cout << fileStr.toStdString() << std::endl;
     std::cout << "---------------------------------------------------------------------------" << std::endl;
 }
+
 void createFolder(const QString &folderPath) {
     QDir dir(folderPath);
     if (!dir.exists()) {
         dir.mkdir(folderPath);
     }
 }
+
 int main(int argc, char *argv[])
 {
 #ifdef __linux__
@@ -75,9 +78,9 @@ int main(int argc, char *argv[])
     int screenWidth = screen->size().width();
     int screenHeight = screen->size().height();
     mainWidget->show();
-    DayTimerWidget *dayTimerWidget = new DayTimerWidget();
-    dayTimerWidget->move((screenWidth - dayTimerWidget->width()),(screenHeight - dayTimerWidget->height()) * 0.95);
     if (timerIsOpen()) {
+        DayTimerWidget *dayTimerWidget = new DayTimerWidget();
+        dayTimerWidget->move((screenWidth - dayTimerWidget->width()),(screenHeight - dayTimerWidget->height()) * 0.95);
         dayTimerWidget->show();
     }
 #endif

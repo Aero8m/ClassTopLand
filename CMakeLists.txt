@@ -50,6 +50,9 @@ qt_add_executable(
         ${SOURCE_FILES}
         ${RESOURCE_FILES}
 )
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 set_target_properties(ClassTopLand PROPERTIES
         WIN32_EXECUTABLE TRUE
         MACOSX_BUNDLE TRUE
@@ -80,4 +83,3 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Widgets
         Qt::Network
 )
-

@@ -1,6 +1,7 @@
 #include "./MainTableWidget.h"
 #include "ui_MainTableWidget.h"
 #include "../Utils/Utils.h"
+#include <QSet>
 
 
 
@@ -157,8 +158,9 @@ void MainTableWidget::initAnimation()
 {
     QScreen *screen = qApp->primaryScreen();
     int screenW = screen->size().width();
-    move((screenW - width()) / 2, 0);
-    move((screenW - width()) / 2, 0);
+    const QPoint expandedPosition((screenW - expandedWindowWidth()) / 2, 0);
+    const QPoint hiddenPosition(screenW - collapsedWindowWidth(), 0);
+    move(windowHidden ? hiddenPosition : expandedPosition);
     // 信息显示动画
     statusMsgAnimation = new QPropertyAnimation(ui->status_show,"geometry",this);
     statusMsgAnimation->setDuration(500);
@@ -169,9 +171,25 @@ void MainTableWidget::initAnimation()
     hideAnimation = new QPropertyAnimation(this,"pos",this);
     hideAnimation->setDuration(700);
     hideAnimation->setEasingCurve(QEasingCurve::InOutExpo);
-    hideAnimation->setStartValue(pos());
-    hideAnimation->setEndValue(QPoint(screenW - SIDEBAR_WIDTH, 0));
+    hideAnimation->setStartValue(expandedPosition);
+    hideAnimation->setEndValue(hiddenPosition);
 
+}
+
+int MainTableWidget::expandedWindowWidth() const
+{
+    if (isFinished)
+    {
+        return DEFAULT_WINDOW_WIDTH;
+    }
+
+    return SIDEBAR_WIDTH + BLOCK_SPACING
+        + static_cast<int>(todayTable.count()) * CLASS_BLOCK_SIZE;
+}
+
+int MainTableWidget::collapsedWindowWidth() const
+{
+    return isFinished ? ui->hide_window->width() : SIDEBAR_WIDTH;
 }
 
 void MainTableWidget::initUi(){
@@ -189,19 +207,48 @@ void MainTableWidget::initUi(){
 }
 void MainTableWidget::on_hideWindow()
 {
-    if (isFinished || !hideAnimation)
+    if (!hideAnimation || hideAnimation->state() == QAbstractAnimation::Running)
     {
         return;
     }
+
+    if (isFinished)
+    {
+        const int expandedWidth = expandedWindowWidth();
+        resize(expandedWidth, height());
+        ui->stackedWidget->resize(expandedWidth, height());
+        ui->status_show->resize(expandedWidth, height());
+        ui->stackedWidget->show();
+        ui->status_show->show();
+        ui->hide_window->show();
+        ui->hide_window->raise();
+
+        if (!windowHidden)
+        {
+            windowHidden = true;
+            hideAnimation->setDirection(QAbstractAnimation::Forward);
+        }
+        else
+        {
+            windowHidden = false;
+            hideAnimation->setDirection(QAbstractAnimation::Backward);
+        }
+        hideAnimation->start();
+        return;
+    }
+
     if (!windowHidden)
     {
         hideAnimation->setDirection(QAbstractAnimation::Forward);
         hideAnimation->start();
         QTimer::singleShot(hideAnimation->duration() / 2, this, [=, this] {
             ui->class_show_widget->hide();
-            resize(SIDEBAR_WIDTH, height());
-            ui->stackedWidget->resize(SIDEBAR_WIDTH, height());
-            ui->status_show->resize(SIDEBAR_WIDTH, height());
+            const int collapsedWidth = collapsedWindowWidth();
+            resize(collapsedWidth, height());
+            ui->stackedWidget->resize(collapsedWidth, height());
+            ui->status_show->resize(collapsedWidth, height());
+            ui->hide_window->show();
+            ui->hide_window->raise();
             windowHidden = true;
         });
     }else
@@ -210,9 +257,13 @@ void MainTableWidget::on_hideWindow()
         hideAnimation->start();
         QTimer::singleShot(hideAnimation->duration() / 2, this, [=, this] {
             ui->class_show_widget->show();
-            resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE, height());
-            ui->stackedWidget->resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE, height());
-            ui->status_show->resize(SIDEBAR_WIDTH + BLOCK_SPACING + todayTable.count() * CLASS_BLOCK_SIZE, height());
+            ui->stackedWidget->show();
+            ui->status_show->show();
+            const int expandedWidth = expandedWindowWidth();
+            resize(expandedWidth, height());
+            ui->stackedWidget->resize(expandedWidth, height());
+            ui->status_show->resize(expandedWidth, height());
+            ui->hide_window->raise();
             windowHidden = false;
         });
     }
@@ -247,12 +298,32 @@ void MainTableWidget::initSignal(){
     connect(refetchThread,&RefetchTableThread::toDone,this,[=, this]
     {
         isFinished = true;
-        resize(DEFAULT_WINDOW_WIDTH, height());
-        ui->stackedWidget->resize(DEFAULT_WINDOW_WIDTH, height());
-        ui->status_show->resize(DEFAULT_WINDOW_WIDTH, height());
+        const int targetWidth = expandedWindowWidth();
+        ui->stackedWidget->show();
+        ui->status_show->show();
+        ui->hide_window->show();
+        ui->hide_window->raise();
+        resize(targetWidth, height());
+        ui->stackedWidget->resize(targetWidth, height());
+        ui->status_show->resize(targetWidth, height());
         QScreen *screen = qApp->primaryScreen();
         int screenW = screen->size().width();
-        move((screenW - width()) / 2, 0);
+        const QPoint expandedPosition((screenW - expandedWindowWidth()) / 2, 0);
+        const QPoint hiddenPosition(screenW - collapsedWindowWidth(), 0);
+        if (hideAnimation)
+        {
+            hideAnimation->stop();
+            hideAnimation->setStartValue(expandedPosition);
+            hideAnimation->setEndValue(hiddenPosition);
+        }
+        if (windowHidden)
+        {
+            move(hiddenPosition);
+        }
+        else
+        {
+            move(expandedPosition);
+        }
 
     },Qt::QueuedConnection);
     connect(refetchThread,&RefetchTableThread::initMainWindowAnimation,this,&MainTableWidget::initAnimation,Qt::QueuedConnection);
@@ -308,6 +379,7 @@ void RefetchTableThread::run(){
     QJsonObject nullClass = { {"start","00:00"},{"end","00:00"} };
     int requestedPage = -1;
     QString lastDoneText;
+    QSet<int> upcomingReminderShown;
     auto switchPage = [this, &requestedPage](int page)
     {
         if (requestedPage != page)
@@ -365,9 +437,10 @@ void RefetchTableThread::run(){
                 msleep(50);
             }
         } else { // 当前课程已结束
-            if (currentDateTime.secsTo(nextClassStartTime)> 0) { // 当前时间 - 下一节课开始时间 >= 0 (就是这节课，且正在下课时间)
+            const qint64 remainingSecs = currentDateTime.secsTo(nextClassStartTime);
+            if (remainingSecs > 0) { // 下一节课尚未开始，当前处于课间
                 emit setClassStyleSheet(idx, "color: black;"); //去除上一节课的边框
-            emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
+                emit setClassStyleSheet(idx+1, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
                 if (currentDateTime.secsTo(currentClassEndTime) == 0 and classStarted) {
                     classStarted = false;
                     emit showStatusMessageAS({QString("%1 已经下课，请做好下节课上课准备").arg(currentClass["name"].toString()),
@@ -375,14 +448,16 @@ void RefetchTableThread::run(){
                         QString("下课时间到")
                     });
                 }
-                int diffTime = currentDateTime.secsTo(nextClassStartTime); // 当前时间 - 下一节课开始时间 (课间还剩多久)
+                int diffTime = static_cast<int>(remainingSecs); // 当前时间 - 下一节课开始时间 (课间还剩多久)
                 int hour = diffTime / 3600;
                 diffTime = diffTime % 3600;
                 int min = diffTime / 60;
                 int sec = diffTime % 60;
                 QString displayString = QString("%1:%2:%3").arg(hour, 2, 10, QLatin1Char('0')).arg(min, 2, 10, QLatin1Char('0')).arg(sec, 2, 10, QLatin1Char('0'));
                 emit tst(displayString);
-                if (hour == 0 && min == 2 && sec == 0) {
+                const int nextClassIndex = idx + 1;
+                if (remainingSecs <= 120 && !upcomingReminderShown.contains(nextClassIndex)) {
+                    upcomingReminderShown.insert(nextClassIndex);
                     emit showStatusMessageAS({QString("%1 即将上课，请做好上课准备").arg(nextClass["name"].toString()),
                         QString("%1 即将上课").arg(nextClass["name"].toString()),
                         QString("即将上课")

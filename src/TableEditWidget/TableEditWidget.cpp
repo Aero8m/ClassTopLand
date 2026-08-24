@@ -3,7 +3,7 @@
 #include <QRegularExpression>
 #include <QSignalBlocker>
 
-namespace {
+
 QTime parseClassTime(const QString &text)
 {
     static const QRegularExpression timePattern(
@@ -38,7 +38,6 @@ void sortClassesByStartTime(QJsonArray &classes)
             classes[earliestIndex] = currentValue;
         }
     }
-}
 }
 
 
@@ -210,24 +209,80 @@ void TableEditWidget::toggleded(){
         refechTableWidget(timeTableJson["appendixTables"].toObject()[currentEditAppendixTableName].toArray());
     }
 }
-void TableEditWidget::addItem(QString key){
-    if (ui->lineEdit->text() == "")
+
+CourseValidationResult TableEditWidget::validateCourse(const QJsonObject &course)
+{
+    if (!course.value("name").isString() ||
+        !course.value("start").isString() ||
+        !course.value("end").isString())
     {
-        QMessageBox::critical(this,"错误","请输入课程名称");
+        return {
+            false,
+            {},
+            tr("课程必须包含字符串类型的 name、start 和 end")
+        };
+    }
+
+    const QString name = course.value("name").toString().trimmed();
+    const QString startText = course.value("start").toString().trimmed();
+    const QString endText = course.value("end").toString().trimmed();
+
+    if (name.isEmpty())
+    {
+        return {false, {}, tr("课程名称不能为空")};
+    }
+
+    static const QRegularExpression timePattern(
+        QStringLiteral(R"(^(?:[01]\d|2[0-3]):[0-5]\d$)"));
+    if (!timePattern.match(startText).hasMatch() ||
+        !timePattern.match(endText).hasMatch())
+    {
+        return {false, {}, tr("课程时间必须使用 HH:mm 格式")};
+    }
+
+    const QTime startTime = QTime::fromString(startText, QStringLiteral("HH:mm"));
+    const QTime endTime = QTime::fromString(endText, QStringLiteral("HH:mm"));
+    if (!startTime.isValid() || !endTime.isValid())
+    {
+        return {false, {}, tr("课程时间无效")};
+    }
+    if (startTime >= endTime)
+    {
+        return {false, {}, tr("上课时间必须早于下课时间")};
+    }
+
+    return {
+        true,
+        QJsonObject{
+                {"name", name},
+                {"start", startTime.toString(QStringLiteral("HH:mm"))},
+                {"end", endTime.toString(QStringLiteral("HH:mm"))}
+        },
+        {}
+    };
+}
+
+void TableEditWidget::addItem(QString key){
+    const QJsonObject candidateCourse{
+        {"name", ui->lineEdit->text()},
+        {"start", ui->timeEdit->time().toString(QStringLiteral("HH:mm"))},
+        {"end", ui->timeEdit_2->time().toString(QStringLiteral("HH:mm"))}
+    };
+    const CourseValidationResult validationResult = validateCourse(candidateCourse);
+    if (!validationResult.valid)
+    {
+        QMessageBox::critical(this, tr("错误"), validationResult.error);
         return;
     }
+
     readTableJson();
-    QJsonObject insertJson;
-    insertJson.insert("name",ui->lineEdit->text());
-    insertJson.insert("start",ui->timeEdit->text());
-    insertJson.insert("end",ui->timeEdit_2->text());
     QJsonArray editArray;
     if (isEditAppendixTable){
         editArray = timeTableJson["appendixTables"][key].toArray();
     }else{
         editArray = timeTableJson[key].toArray();
     }
-    editArray.append(insertJson);
+    editArray.append(validationResult.normalizedCourse);
     sortClassesByStartTime(editArray);
     if (isEditAppendixTable){
         QJsonObject appendixTablesObj = timeTableJson["appendixTables"].toObject();

@@ -23,6 +23,14 @@
 namespace Ui {
 class TableEditWidget;
 }
+
+struct CourseValidationResult
+{
+    bool valid = false;
+    QJsonObject normalizedCourse;
+    QString error;
+};
+
 class TableEditWidget : public QWidget
 {
     Q_OBJECT
@@ -37,7 +45,8 @@ private:
     void showEvent(QShowEvent* event) override;
     void readTableJson();
     void refechTableWidget(QJsonArray todayTable);
-    
+    static CourseValidationResult validateCourse(const QJsonObject &course);
+
     void closeEvent(QCloseEvent* event) override;
     void addItem(QString key);
 public slots:
