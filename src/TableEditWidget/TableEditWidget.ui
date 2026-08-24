@@ -883,18 +883,18 @@ background:rgb(11, 96, 139);
   <customwidget>
    <class>ClickLabel</class>
    <extends>QLabel</extends>
-   <header>../src/ClickLabel/ClickLabel.h</header>
+   <header>ClickLabel/ClickLabel.h</header>
   </customwidget>
   <customwidget>
    <class>ExportAPISettingsTab</class>
    <extends>QWidget</extends>
-   <header>../src/ExportAPISettingsTab/ExportAPISettingsTab.h</header>
+   <header>ExportAPISettingsTab/ExportAPISettingsTab.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>FluentTabWidget</class>
    <extends>QTabWidget</extends>
-   <header>../src/FluentTabWidget/FluentTabWidget.h</header>
+   <header>FluentTabWidget/FluentTabWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

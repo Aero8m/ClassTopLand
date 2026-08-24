@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>ExportAPISettingsTab</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,3,3">
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,3">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1">
      <item>
@@ -37,6 +37,9 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <property name="title">
       <string>API身份验证</string>
      </property>
@@ -104,6 +107,9 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_2">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <property name="title">
       <string>API服务</string>
      </property>

@@ -53,23 +53,28 @@ void AppendixTableManager::addAppendTables() {
                     "QLabel{color:rgb(85,85,85); background:#ffffff;font:12px \"Microsoft YaHei\"; font-weight:bold;}"
                     "QInputDialog{background-color:rgb(255,255,255); }";
     dialog.setStyleSheet(style);
-    dialog.exec();
-    if (!dialog.textValue().isEmpty()){
-        bool hasInput = false;
-        for (int i = 0; i < ui->list_appendTable->count(); i++){
-            if (dialog.textValue() == ui->list_appendTable->item(i)->text()){
-                hasInput = true;
-                break;
-            }
-        }
-        if (!hasInput){
-            QJsonArray nullJsonArray;
-            appendixTables[dialog.textValue()] = nullJsonArray;
-            writeAppendixTables();
-            readAppendixTables();
-        }
-
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
     }
+
+    const QString tableName = dialog.textValue().trimmed();
+    if (tableName.isEmpty()) {
+        QMessageBox::critical(this, tr("错误"), tr("课表名称不能为空！"));
+        return;
+    }
+    if (tableName.contains("_"))
+    {
+        QMessageBox::critical(this, tr("错误"), tr("课表名称不能含有下划线！"));
+        return;
+    }
+    if (appendixTables.contains(tableName)) {
+        QMessageBox::critical(this, tr("错误"), tr("已存在同名附加课表！"));
+        return;
+    }
+
+    appendixTables.insert(tableName, QJsonArray{});
+    writeAppendixTables();
+    readAppendixTables();
 }
 void AppendixTableManager::deleteAppendTables(QListWidgetItem *item) {
     appendixTables.remove(item->text());

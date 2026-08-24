@@ -14,7 +14,7 @@
    <string>附加课表管理</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">background:#fff;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -54,7 +54,7 @@
        <widget class="QLabel" name="label">
         <property name="font">
          <font>
-          <pointsize>14</pointsize>
+          <pointsize>12</pointsize>
          </font>
         </property>
         <property name="styleSheet">

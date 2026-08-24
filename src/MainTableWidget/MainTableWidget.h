@@ -81,6 +81,8 @@ private:
     void initSignal();
     void initUi();
     void stopRefetchThread();
+    int expandedWindowWidth() const;
+    int collapsedWindowWidth() const;
     QHBoxLayout* classShowWidgetLayout;
     bool windowHidden = false;
     QTimer* topTimer;
@@ -103,8 +105,8 @@ private:
     QAction* restartAppAction;
     QSystemTrayIcon *sysTrayIcon; //系统托盘
     RefetchTableThread* refetchThread;
-    QPropertyAnimation* statusMsgAnimation;
-    QPropertyAnimation* hideAnimation;
+    QPropertyAnimation* statusMsgAnimation = nullptr;
+    QPropertyAnimation* hideAnimation = nullptr;
     QJsonObject config;
 
     static constexpr int SIDEBAR_WIDTH = 154;
