@@ -1,7 +1,6 @@
 #include "./MainTableWidget.h"
 #include "ui_MainTableWidget.h"
 #include "../Utils/Utils.h"
-#include <QSet>
 
 
 
@@ -138,6 +137,8 @@ void MainTableWidget::showStatus(QString str)
         on_hideWindow();
         asyncSleep(700);
     }
+
+    ui->status_show->raise();
 
     ui->label_3->setText(str);
     statusMsgAnimation->setEasingCurve(QEasingCurve::OutExpo);
@@ -293,7 +294,10 @@ void MainTableWidget::initSignal(){
     connect(refetchThread,&RefetchTableThread::setClassStyleSheet,this,[=, this](int idx,QString styleSheet)
     {
         QList<QLabel*> classList = ui->class_show_widget->findChildren<QLabel*>();
-        classList[idx]->setStyleSheet(styleSheet);
+        if (idx >= 0 && idx < classList.size())
+        {
+            classList[idx]->setStyleSheet(styleSheet);
+        }
     },Qt::QueuedConnection);
     connect(refetchThread,&RefetchTableThread::toDone,this,[=, this]
     {
@@ -379,7 +383,6 @@ void RefetchTableThread::run(){
     QJsonObject nullClass = { {"start","00:00"},{"end","00:00"} };
     int requestedPage = -1;
     QString lastDoneText;
-    QSet<int> upcomingReminderShown;
     auto switchPage = [this, &requestedPage](int page)
     {
         if (requestedPage != page)
@@ -437,8 +440,7 @@ void RefetchTableThread::run(){
                 msleep(50);
             }
         } else { // 当前课程已结束
-            const qint64 remainingSecs = currentDateTime.secsTo(nextClassStartTime);
-            if (remainingSecs > 0) { // 下一节课尚未开始，当前处于课间
+            if (currentDateTime.secsTo(nextClassStartTime)> 0) { // 当前时间 - 下一节课开始时间 >= 0 (就是这节课，且正在下课时间)
                 emit setClassStyleSheet(idx, "color: black;"); //去除上一节课的边框
                 emit setClassStyleSheet(idx+1, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
                 if (currentDateTime.secsTo(currentClassEndTime) == 0 and classStarted) {
@@ -448,16 +450,14 @@ void RefetchTableThread::run(){
                         QString("下课时间到")
                     });
                 }
-                int diffTime = static_cast<int>(remainingSecs); // 当前时间 - 下一节课开始时间 (课间还剩多久)
+                int diffTime = currentDateTime.secsTo(nextClassStartTime); // 当前时间 - 下一节课开始时间 (课间还剩多久)
                 int hour = diffTime / 3600;
                 diffTime = diffTime % 3600;
                 int min = diffTime / 60;
                 int sec = diffTime % 60;
                 QString displayString = QString("%1:%2:%3").arg(hour, 2, 10, QLatin1Char('0')).arg(min, 2, 10, QLatin1Char('0')).arg(sec, 2, 10, QLatin1Char('0'));
                 emit tst(displayString);
-                const int nextClassIndex = idx + 1;
-                if (remainingSecs <= 120 && !upcomingReminderShown.contains(nextClassIndex)) {
-                    upcomingReminderShown.insert(nextClassIndex);
+                if (hour == 0 && min == 2 && sec == 0) {
                     emit showStatusMessageAS({QString("%1 即将上课，请做好上课准备").arg(nextClass["name"].toString()),
                         QString("%1 即将上课").arg(nextClass["name"].toString()),
                         QString("即将上课")
