@@ -85,6 +85,7 @@ private:
     int collapsedWindowWidth() const;
     QHBoxLayout* classShowWidgetLayout;
     bool windowHidden = false;
+    bool isShowingStatus = false;
     QTimer* topTimer;
     bool isFinished = false;
     QJsonObject timeTable;

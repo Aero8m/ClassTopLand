@@ -3,6 +3,19 @@
 #include "../Utils/Utils.h"
 
 
+namespace {
+int secondsRemainingRoundedUp(const QDateTime &currentDateTime, const QDateTime &targetDateTime)
+{
+    constexpr qint64 millisecondsPerSecond = 1000;
+    const qint64 remainingMilliseconds = currentDateTime.msecsTo(targetDateTime);
+    if (remainingMilliseconds <= 0) {
+        return 0;
+    }
+
+    return static_cast<int>((remainingMilliseconds + millisecondsPerSecond - 1) / millisecondsPerSecond);
+}
+}
+
 
 void asyncSleep(unsigned int msec)
 {
@@ -131,7 +144,11 @@ void MainTableWidget::showStatus(QString str)
 {
     if (!statusMsgAnimation)
         return;
-
+    if (isShowingStatus)
+    {
+        return;
+    }
+    isShowingStatus = true;
     if (windowHidden)
     {
         on_hideWindow();
@@ -153,6 +170,7 @@ void MainTableWidget::showStatus(QString str)
         statusMsgAnimation->setEndValue(QRect(0,0,width(),49));
         statusMsgAnimation->setDirection(QAbstractAnimation::Backward);
         statusMsgAnimation->start();
+        isShowingStatus = false;
     });
 }
 void MainTableWidget::initAnimation()
@@ -411,7 +429,7 @@ void RefetchTableThread::run(){
         if (idx == 0 && currentDateTime < currentClassStartTime) // 当前还没有上课
         {
             emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
-            int diffTime = currentDateTime.secsTo(currentClassStartTime);
+            int diffTime = secondsRemainingRoundedUp(currentDateTime, currentClassStartTime);
             int hour = diffTime / 3600;
             diffTime = diffTime % 3600;
             int min = diffTime / 60;
@@ -422,7 +440,7 @@ void RefetchTableThread::run(){
         } else if (currentDateTime < currentClassEndTime) { // 已到上课时间，且当前课程尚未结束
             if (idx > 0) emit setClassStyleSheet(idx - 1, "color: black;"); //去除上一节课的边框
             emit setClassStyleSheet(idx, "border-width: 0px 0px 4px 0px; border-color:#1191d3; border-style: solid; color: black;");
-            if (currentDateTime.secsTo(currentClassStartTime) == 0 and !classStarted) {  // 当前时间 - 当前课程开始时间 == 0 (刚开始上课)
+            if (currentDateTime >= currentClassStartTime && !classStarted) {  // 刚开始上课
                 classStarted = true;
                 emit showStatusMessageAS({QString("%1 已经上课，请回到座位").arg(currentClass["name"].toString()),
                         QString("%1 已上课").arg(currentClass["name"].toString()),
@@ -430,7 +448,7 @@ void RefetchTableThread::run(){
                 });
             }
             else {
-                int diffTime = currentDateTime.secsTo(currentClassEndTime);
+                int diffTime = secondsRemainingRoundedUp(currentDateTime, currentClassEndTime);
                 int hour = diffTime / 3600;
                 diffTime = diffTime % 3600;
                 int min = diffTime / 60;
@@ -440,17 +458,17 @@ void RefetchTableThread::run(){
                 msleep(50);
             }
         } else { // 当前课程已结束
-            if (currentDateTime.secsTo(nextClassStartTime)> 0) { // 当前时间 - 下一节课开始时间 >= 0 (就是这节课，且正在下课时间)
+            if (currentDateTime < nextClassStartTime) { // 当前课程已结束，下一节课尚未开始
                 emit setClassStyleSheet(idx, "color: black;"); //去除上一节课的边框
                 emit setClassStyleSheet(idx+1, "border-width: 0px 0px 4px 0px; border-color:rgb(0,226,142); border-style: solid; color: black;");
-                if (currentDateTime.secsTo(currentClassEndTime) == 0 and classStarted) {
+                if (classStarted) {
                     classStarted = false;
                     emit showStatusMessageAS({QString("%1 已经下课，请做好下节课上课准备").arg(currentClass["name"].toString()),
                         QString("%1 已下课").arg(currentClass["name"].toString()),
                         QString("下课时间到")
                     });
                 }
-                int diffTime = currentDateTime.secsTo(nextClassStartTime); // 当前时间 - 下一节课开始时间 (课间还剩多久)
+                int diffTime = secondsRemainingRoundedUp(currentDateTime, nextClassStartTime); // 课间还剩多久
                 int hour = diffTime / 3600;
                 diffTime = diffTime % 3600;
                 int min = diffTime / 60;
