@@ -58,6 +58,8 @@ private slots:
     void on_editAppendixTable(QString tableName);
     void on_cellChanged(int row,int column);
     void on_deleteButton_clicked();
+    void importCSESTable();
+    void exportCSESTable();
 signals:
     void refetchTableSignal();
 

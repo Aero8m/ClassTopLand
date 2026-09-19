@@ -38,6 +38,12 @@ find_package(Qt6 COMPONENTS
         REQUIRED
 )
 
+set(YAML_BUILD_SHARED_LIBS OFF)
+add_subdirectory(third_party/yaml-cpp)
+if(MSVC)
+    set_property(TARGET yaml-cpp PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
+
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/*.cpp" "src/*.h" "src/*.ui")
 set(RESOURCE_FILES res.qrc resource.rc)
 
@@ -82,4 +88,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Gui
         Qt::Widgets
         Qt::Network
+        yaml-cpp::yaml-cpp
 )

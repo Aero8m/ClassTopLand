@@ -1,7 +1,13 @@
 #include "./TableEditWidget.h"
 #include "ui_TableEditWidget.h"
+#include "../CSESTableProcessor/CSESTableProcessor.h"
+#include <QDialog>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QRegularExpression>
+#include <QSaveFile>
 #include <QSignalBlocker>
+#include <exception>
 
 
 QTime parseClassTime(const QString &text)
@@ -38,6 +44,35 @@ void sortClassesByStartTime(QJsonArray &classes)
             classes[earliestIndex] = currentValue;
         }
     }
+}
+
+namespace {
+QString tableFilePath()
+{
+    return QDir::homePath() + QStringLiteral("/ClassTopLand_Data/tables.json");
+}
+
+bool saveFileAtomically(const QString &path, const QByteArray &content, QString *error)
+{
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        *error = file.errorString();
+        return false;
+    }
+    if (file.write(content) != content.size())
+    {
+        *error = file.errorString();
+        file.cancelWriting();
+        return false;
+    }
+    if (!file.commit())
+    {
+        *error = file.errorString();
+        return false;
+    }
+    return true;
+}
 }
 
 
@@ -94,6 +129,8 @@ TableEditWidget::TableEditWidget(QWidget *parent)
         });
     connect(ui->save_text_config,&QPushButton::clicked,this,&TableEditWidget::on_timerInfo_changed);
     connect(ui->start_table_manager,&QPushButton::clicked,this,&TableEditWidget::on_show_AppendixTableManager);
+    connect(ui->importCSES, &QPushButton::clicked, this, &TableEditWidget::importCSESTable);
+    connect(ui->outputCSES, &QPushButton::clicked, this, &TableEditWidget::exportCSESTable);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->label_4->setText("Build " + QString(APP_VERSION));
     connect(ui->tableWidget, &QTableWidget::cellChanged, this, &TableEditWidget::on_cellChanged);
@@ -159,6 +196,147 @@ void TableEditWidget::readTableJson(){
     if (!result) return;
     timeTableJson = *result;
 }
+
+void TableEditWidget::importCSESTable()
+{
+    const QString sourcePath = QFileDialog::getOpenFileName(
+        this, tr("导入 CSES 课表"), QDir::homePath(),
+        tr("CSES YAML 文件 (*.yaml *.yml);;所有文件 (*)"));
+    if (sourcePath.isEmpty())
+    {
+        return;
+    }
+
+    QFile source(sourcePath);
+    if (!source.open(QIODevice::ReadOnly))
+    {
+        QMessageBox::critical(this, tr("导入失败"),
+                              tr("无法读取文件：%1").arg(source.errorString()));
+        return;
+    }
+    const QByteArray yamlText = source.readAll();
+    if (source.error() != QFileDevice::NoError)
+    {
+        QMessageBox::critical(this, tr("导入失败"),
+                              tr("读取文件失败：%1").arg(source.errorString()));
+        return;
+    }
+
+    QJsonObject importedTable;
+    try
+    {
+        importedTable = CSESTableProcessor::parseCSESYaml(yamlText);
+    }
+    catch (const std::exception &error)
+    {
+        QMessageBox::critical(this, tr("导入失败"),
+                              tr("CSES 文件无效：%1").arg(QString::fromUtf8(error.what())));
+        return;
+    }
+
+    if (QMessageBox::question(this, tr("确认导入"),
+                              tr("导入将覆盖现有的全部星期课表和附加课表，确定继续吗？"),
+                              QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes)
+    {
+        return;
+    }
+
+    QString writeError;
+    if (!saveFileAtomically(tableFilePath(), QJsonDocument(importedTable).toJson(QJsonDocument::Indented),
+                            &writeError))
+    {
+        QMessageBox::critical(this, tr("导入失败"),
+                              tr("保存课表失败：%1").arg(writeError));
+        return;
+    }
+
+    timeTableJson = importedTable;
+    isEditAppendixTable = false;
+    currentEditAppendixTableName.clear();
+    if (ui->radioButton_6->isChecked())
+    {
+        ui->radioButton->setChecked(true);
+    }
+    toggleded();
+    emit refetchTableSignal();
+    QMessageBox::information(this, tr("导入成功"), tr("CSES 课表已导入并应用。"));
+}
+
+void TableEditWidget::exportCSESTable()
+{
+    QFileDialog dialog(this, tr("导出 CSES 课表"), QDir::homePath());
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setNameFilter(tr("CSES YAML 文件 (*.yaml *.yml)"));
+    dialog.setDefaultSuffix(QStringLiteral("yaml"));
+    dialog.selectFile(QStringLiteral("ClassTopLand_CSES.yaml"));
+    if (dialog.exec() != QDialog::Accepted)
+    {
+        return;
+    }
+    const QStringList selectedFiles = dialog.selectedFiles();
+    if (selectedFiles.isEmpty() || selectedFiles.first().isEmpty())
+    {
+        return;
+    }
+    const QString outputPath = selectedFiles.first();
+    const QString localPath = tableFilePath();
+    const QFileInfo outputInfo(outputPath);
+    if (outputInfo.exists() && outputInfo.canonicalFilePath() == QFileInfo(localPath).canonicalFilePath())
+    {
+        QMessageBox::critical(this, tr("导出失败"), tr("不能将 YAML 导出到当前的 tables.json。"));
+        return;
+    }
+
+    QFile localFile(localPath);
+    if (!localFile.open(QIODevice::ReadOnly))
+    {
+        QMessageBox::critical(this, tr("导出失败"),
+                              tr("无法读取本地课表：%1").arg(localFile.errorString()));
+        return;
+    }
+    const QByteArray jsonText = localFile.readAll();
+    if (localFile.error() != QFileDevice::NoError)
+    {
+        QMessageBox::critical(this, tr("导出失败"),
+                              tr("读取本地课表失败：%1").arg(localFile.errorString()));
+        return;
+    }
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(jsonText, &parseError);
+    if (parseError.error != QJsonParseError::NoError)
+    {
+        QMessageBox::critical(this, tr("导出失败"),
+                              tr("本地 tables.json 解析失败：%1").arg(parseError.errorString()));
+        return;
+    }
+    if (!document.isObject())
+    {
+        QMessageBox::critical(this, tr("导出失败"), tr("本地 tables.json 不是有效的课表对象。"));
+        return;
+    }
+
+    QByteArray yamlText;
+    try
+    {
+        yamlText = CSESTableProcessor::serializeCSESYaml(document.object());
+    }
+    catch (const std::exception &error)
+    {
+        QMessageBox::critical(this, tr("导出失败"),
+                              tr("课表无法转换为 CSES：%1").arg(QString::fromUtf8(error.what())));
+        return;
+    }
+
+    QString writeError;
+    if (!saveFileAtomically(outputPath, yamlText, &writeError))
+    {
+        QMessageBox::critical(this, tr("导出失败"),
+                              tr("保存文件失败：%1").arg(writeError));
+        return;
+    }
+    QMessageBox::information(this, tr("导出成功"), tr("CSES 课表已保存。"));
+}
+
 void TableEditWidget::refechTableWidget(QJsonArray todayTable){
     const QSignalBlocker blocker(ui->tableWidget);
     ui->tableWidget->clear();

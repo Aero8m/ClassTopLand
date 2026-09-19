@@ -63,6 +63,8 @@
 
 编译器、Qt 套件、架构和 ABI 必须匹配。例如，在 Windows 上使用 MSVC ABI 的 Qt 时，应配合 MSVC 或兼容的 clang-cl 工具链。
 
+项目内置 [yaml-cpp](https://github.com/jbeder/yaml-cpp) 0.9.0 源码，位于 `third_party/yaml-cpp`，对应上游提交 `1e0876c671268661deb2628040e3959e1e9d6e69`。CMake 会将其编译为静态库并链接到程序，无需单独安装。其 MIT 许可证见 `third_party/yaml-cpp/LICENSE`；项目源码可使用 `#include <yaml-cpp/yaml.h>`。
+
 ### Windows
 
 以下示例使用 PowerShell 和 Ninja。请将 Qt 路径替换为本机实际安装位置：
