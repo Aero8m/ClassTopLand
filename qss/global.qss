@@ -99,6 +99,11 @@ QPushButton{
 QPushButton:hover{
 background:rgb(11, 96, 139);
 }
+QFrame#fluentCard, QFrame#apiAuthCard, QFrame#apiServiceCard{
+    background: #f7f7f7;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+}
 QRadioButton::indicator{
 	width:17px;
 	height:17px;

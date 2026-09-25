@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>600</height>
+    <width>896</width>
+    <height>536</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -246,7 +246,7 @@ border-bottom:3px solid #1191d3;
              <widget class="QPushButton" name="importCSES">
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>90</width>
                 <height>27</height>
                </size>
               </property>
@@ -259,7 +259,7 @@ border-bottom:3px solid #1191d3;
              <widget class="QPushButton" name="outputCSES">
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>90</width>
                 <height>27</height>
                </size>
               </property>
@@ -660,6 +660,11 @@ background:#1191d3;
        <string>第三方API服务</string>
       </attribute>
      </widget>
+     <widget class="WindowInterceptionTab" name="windowInterceptionTab">
+      <attribute name="title">
+       <string>窗口拦截设置</string>
+      </attribute>
+     </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
        <string>关于</string>
@@ -906,6 +911,11 @@ background:rgb(11, 96, 139);
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>WindowInterceptionTab</class>
+   <extends>QWidget</extends>
+   <header>WindowInterceptionTab/WindowInterceptionTab.h</header>
+  </customwidget>
   <customwidget>
    <class>ClickLabel</class>
    <extends>QLabel</extends>

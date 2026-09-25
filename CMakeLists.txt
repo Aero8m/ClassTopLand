@@ -83,6 +83,9 @@ if (UNIX AND NOT APPLE)
     target_include_directories(ClassTopLand PRIVATE ${X11_INCLUDE_DIR})
     target_link_libraries(ClassTopLand PRIVATE ${X11_LIBRARIES})
 endif()
+if (WIN32)
+    target_link_libraries(ClassTopLand PRIVATE user32)
+endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Core
         Qt::Gui

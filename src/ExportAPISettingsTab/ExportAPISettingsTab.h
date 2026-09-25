@@ -14,8 +14,11 @@ public:
 	ExportAPISettingsTab(QWidget *parent = nullptr);
 	~ExportAPISettingsTab();
 	void initAPIList();
+protected:
+	void showEvent(QShowEvent *event) override;
 private:
 	Ui::ExportAPISettingsTabClass *ui;
+	bool apiListRequested = false;
 
 	NetworkRequests* apiListReq = nullptr;
 	NetworkRequests* exApiTableReq = nullptr;

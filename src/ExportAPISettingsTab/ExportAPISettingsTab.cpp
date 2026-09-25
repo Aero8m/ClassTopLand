@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QShowEvent>
 #include <QStringList>
 #include <QTime>
 
@@ -109,7 +110,10 @@ ExportAPISettingsTab::ExportAPISettingsTab(QWidget *parent)
 	, ui(new Ui::ExportAPISettingsTabClass())
 {
 	ui->setupUi(this);
-	initAPIList();
+	ui->apiListStatus->hide();
+	ui->APIList->setEnabled(false);
+	ui->SyncTable->setEnabled(false);
+	connect(ui->RefreshAPIList, &QPushButton::clicked, this, &ExportAPISettingsTab::initAPIList);
 	connect(ui->SyncTable, &QPushButton::clicked, this, &ExportAPISettingsTab::SyncExAPITable);
 }
 
@@ -121,23 +125,58 @@ ExportAPISettingsTab::~ExportAPISettingsTab()
 	delete ui;
 }
 
+void ExportAPISettingsTab::showEvent(QShowEvent *event) {
+	QWidget::showEvent(event);
+	if (!apiListRequested) {
+		apiListRequested = true;
+		initAPIList();
+	}
+}
+
 void ExportAPISettingsTab::initAPIList() {
 	ui->APIList->clear();
+	ui->APIList->setEnabled(false);
+	ui->SyncTable->setEnabled(false);
+	ui->RefreshAPIList->setEnabled(false);
+	ui->apiListStatus->setStyleSheet(QStringLiteral("color:#666666;"));
+	ui->apiListStatus->setText(tr("正在获取 API 提供商列表…"));
+	ui->apiListStatus->show();
 	if (apiListReq) {
 		delete apiListReq;
 	}
 	apiListReq = new NetworkRequests(GET,CloudAPIUrl::GET_EXAPI_LIST);
 	connect(apiListReq, &NetworkRequests::finished, this, [this](QJsonObject json, QString, QString errorString) {
+		ui->RefreshAPIList->setEnabled(true);
 		if (!errorString.isEmpty())
 		{
-			QMessageBox::critical(this, "错误", "请求失败！");
+			ui->apiListStatus->setStyleSheet(QStringLiteral("color:#b42318;"));
+			ui->apiListStatus->setText(tr("获取 API 列表失败：%1").arg(errorString));
 			return;
 		}
-		QJsonArray apilist = json["data"].toArray();
-		for (auto i : apilist) {
-			QJsonObject api = i.toObject();
-			ui->APIList->addItem(api["name"].toString(),api["id"].toString());
+		const QJsonValue data = json.value(QStringLiteral("data"));
+		if (!data.isArray()) {
+			ui->apiListStatus->setStyleSheet(QStringLiteral("color:#b42318;"));
+			ui->apiListStatus->setText(tr("获取 API 列表失败：服务器返回的数据格式无效。"));
+			return;
 		}
+		for (const QJsonValue &item : data.toArray()) {
+			if (!item.isObject()) {
+				continue;
+			}
+			const QJsonObject api = item.toObject();
+			const QString name = api.value(QStringLiteral("name")).toString();
+			const QString id = api.value(QStringLiteral("id")).toString();
+			if (!name.isEmpty() && !id.isEmpty()) {
+				ui->APIList->addItem(name, id);
+			}
+		}
+		if (ui->APIList->count() == 0) {
+			ui->apiListStatus->setText(tr("没有可用的 API 提供商，可点击“刷新列表”重试。"));
+			return;
+		}
+		ui->APIList->setEnabled(true);
+		ui->SyncTable->setEnabled(true);
+		ui->apiListStatus->hide();
 	});
 	apiListReq->start();
 
