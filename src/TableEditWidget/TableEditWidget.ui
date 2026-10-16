@@ -516,6 +516,11 @@ background:#1191d3;
        </item>
       </layout>
      </widget>
+     <widget class="GeneralSettingsTab" name="generalSettingsTab">
+      <attribute name="title">
+       <string>通用设置</string>
+      </attribute>
+     </widget>
      <widget class="QWidget" name="tab_5">
       <attribute name="title">
        <string>倒计时设置</string>
@@ -911,6 +916,11 @@ background:rgb(11, 96, 139);
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>GeneralSettingsTab</class>
+   <extends>QWidget</extends>
+   <header>GeneralSettingsTab/GeneralSettingsTab.h</header>
+  </customwidget>
   <customwidget>
    <class>WindowInterceptionTab</class>
    <extends>QWidget</extends>

@@ -84,7 +84,7 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(ClassTopLand PRIVATE ${X11_LIBRARIES})
 endif()
 if (WIN32)
-    target_link_libraries(ClassTopLand PRIVATE user32)
+    target_link_libraries(ClassTopLand PRIVATE user32 shell32)
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt::Core

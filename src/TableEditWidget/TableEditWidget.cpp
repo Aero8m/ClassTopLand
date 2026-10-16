@@ -1,6 +1,7 @@
 #include "./TableEditWidget.h"
 #include "ui_TableEditWidget.h"
 #include "../CSESTableProcessor/CSESTableProcessor.h"
+#include "../Utils/ConfigSettings.h"
 #include <QDialog>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -81,6 +82,10 @@ TableEditWidget::TableEditWidget(QWidget *parent)
     , ui(new Ui::TableEditWidget)
 {
     ui->setupUi(this);
+    connect(ui->generalSettingsTab, &GeneralSettingsTab::configSaved, this,
+            [this](const QJsonObject &savedConfig) { configJson = savedConfig; });
+    connect(ui->generalSettingsTab, &GeneralSettingsTab::alwaysOnTopChanged,
+            this, &TableEditWidget::courseBarAlwaysOnTopChanged);
     connect(ui->radioButton,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
     connect(ui->radioButton_2,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
     connect(ui->radioButton_3,&QRadioButton::toggled, this, &TableEditWidget::toggleded);
@@ -143,10 +148,12 @@ TableEditWidget::~TableEditWidget()
     delete ui;
 }
 void TableEditWidget::showEvent(QShowEvent*){
+    ui->generalSettingsTab->reloadSettings();
     readTableJson();
     toggleded();
 }
 void TableEditWidget::closeEvent(QCloseEvent *event){
+    ui->generalSettingsTab->discardChanges();
     QApplication::setQuitOnLastWindowClosed(false);
     emit refetchTableSignal();
     this->hide();
@@ -176,18 +183,20 @@ void TableEditWidget::setConfig(QJsonObject obj){
     ui->edit_name_eng->setText(configJson["english_tag"].toString());
 }
 void TableEditWidget::on_timerInfo_changed(){
-    configJson["end_time"] = ui->timer_time->dateTime().toString("yyyy-MM-dd hh:mm:ss");
-    configJson["label_tag"] = ui->edit_name->text();
-    configJson["english"] = QString("There are () $\nleft until %1").arg(ui->edit_name_eng->text());
-    configJson["english_end"] = QString("There is not a $\nleft until %1").arg(ui->edit_name_eng->text());
-    configJson["english_tag"] = ui->edit_name_eng->text();
-    configJson["disable_timer"] = ui->timer_hide->isChecked();
-    QFile configFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    configFile.open(QFile::WriteOnly);
-    QJsonDocument tempDoc;
-    tempDoc.setObject(configJson);
-    configFile.write(tempDoc.toJson(QJsonDocument::Indented));
-    configFile.close();
+    const QJsonObject changes{
+        {"end_time", ui->timer_time->dateTime().toString("yyyy-MM-dd hh:mm:ss")},
+        {"label_tag", ui->edit_name->text()},
+        {"english", QString("There are () $\nleft until %1").arg(ui->edit_name_eng->text())},
+        {"english_end", QString("There is not a $\nleft until %1").arg(ui->edit_name_eng->text())},
+        {"english_tag", ui->edit_name_eng->text()},
+        {"disable_timer", ui->timer_hide->isChecked()}
+    };
+    QString error;
+    if (!ConfigSettings::mergeAndSave(changes, &configJson, &error)) {
+        qWarning().noquote() << error;
+        QMessageBox::critical(this, tr("保存失败"), error);
+        return;
+    }
     QMessageBox::information(this,tr("提示"),tr("重启生效"));
 }
 

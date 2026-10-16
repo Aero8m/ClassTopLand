@@ -75,6 +75,7 @@ private slots:
     void on_showMainAction();
     void on_hideWindow();
     void restartApplication();
+    void setCourseBarAlwaysOnTop(bool enabled);
 private:
     Ui::MainTableWidget *ui;
     void initSysTrayIcon();

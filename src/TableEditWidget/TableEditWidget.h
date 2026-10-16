@@ -62,6 +62,7 @@ private slots:
     void exportCSESTable();
 signals:
     void refetchTableSignal();
+    void courseBarAlwaysOnTopChanged(bool enabled);
 
 private:
     bool isEditAppendixTable = false;

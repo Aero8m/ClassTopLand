@@ -1,6 +1,7 @@
 #include "./MainTableWidget.h"
 #include "ui_MainTableWidget.h"
 #include "../Utils/Utils.h"
+#include "../Utils/ConfigSettings.h"
 
 
 namespace {
@@ -46,10 +47,17 @@ MainTableWidget::MainTableWidget(QWidget *parent)
 #ifdef WIN32
     connect(topTimer, &QTimer::timeout, this, [=, this]
     {
-            SetWindowPos(HWND(this->winId()), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            if (!SetWindowPos(HWND(winId()), HWND_TOPMOST, 0, 0, 0, 0,
+                              SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)) {
+                qWarning() << "Unable to keep the course bar on top:" << GetLastError();
+            }
     });
-    topTimer->start(3000);
+    if (config.value(ConfigSettings::alwaysOnTopKey).toBool(true)) {
+        topTimer->start(3000);
+    }
 #endif
+    connect(editWindow, &TableEditWidget::courseBarAlwaysOnTopChanged,
+            this, &MainTableWidget::setCourseBarAlwaysOnTop);
     initSignal();
 
     refetchThread->start();
@@ -212,7 +220,11 @@ int MainTableWidget::collapsedWindowWidth() const
 }
 
 void MainTableWidget::initUi(){
-    setWindowFlags(Qt::WindowType::FramelessWindowHint | Qt::WindowType::WindowStaysOnTopHint | Qt::WindowType::Tool | Qt::WindowDoesNotAcceptFocus);
+    Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool | Qt::WindowDoesNotAcceptFocus;
+    if (config.value(ConfigSettings::alwaysOnTopKey).toBool(true)) {
+        flags |= Qt::WindowStaysOnTopHint;
+    }
+    setWindowFlags(flags);
     setAttribute(Qt::WidgetAttribute::WA_TranslucentBackground,true);
     setAttribute(Qt::WidgetAttribute::WA_ShowWithoutActivating,true);
     
@@ -223,6 +235,39 @@ void MainTableWidget::initUi(){
     classShowWidgetLayout->setContentsMargins(0,0,0,0);
     classShowWidgetLayout->setSpacing(0);
     ui->class_show_widget->setLayout(classShowWidgetLayout);
+}
+
+void MainTableWidget::setCourseBarAlwaysOnTop(bool enabled)
+{
+    config.insert(ConfigSettings::alwaysOnTopKey, enabled);
+    topTimer->stop();
+    const bool wasVisible = isVisible();
+    const QRect previousGeometry = geometry();
+    const bool wasAnimating = hideAnimation && hideAnimation->state() == QAbstractAnimation::Running;
+    if (wasAnimating) {
+        hideAnimation->pause();
+    }
+    if (windowFlags().testFlag(Qt::WindowStaysOnTopHint) != enabled) {
+        setWindowFlag(Qt::WindowStaysOnTopHint, enabled);
+        setGeometry(previousGeometry);
+        if (wasVisible) {
+            show();
+        }
+        // Changing window flags can recreate the native window.
+        GlassHelper::enableBlurBehind(this);
+    }
+#if defined(Q_OS_WIN)
+    if (!SetWindowPos(HWND(winId()), enabled ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
+                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)) {
+        qWarning() << "Unable to update the course bar's topmost state:" << GetLastError();
+    }
+    if (enabled) {
+        topTimer->start(3000);
+    }
+#endif
+    if (wasAnimating) {
+        hideAnimation->resume();
+    }
 }
 void MainTableWidget::on_hideWindow()
 {
@@ -362,9 +407,10 @@ void MainTableWidget::readTimeTable(){
     initTodayTable();
 }
 void MainTableWidget::readConfig(){
-    auto result = readJsonFile(QDir::homePath() + "/ClassTopLand_Data" + "/config.json");
-    if (!result) return;
-    config = *result;
+    QString error;
+    if (!ConfigSettings::read(&config, &error)) {
+        qWarning().noquote() << error;
+    }
 }
 void MainTableWidget::initTodayTable(){
     QDateTime currentDateTime = QDateTime::currentDateTime();
